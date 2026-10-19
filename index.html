@@ -1,0 +1,238 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Royal Fits Boutique254 | Fashion Store</title>
+  <meta name="description" content="Shop stylish fashion at Royal Fits Boutique254 in Nairobi, Kenya.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="topbar">
+    Welcome to Royal Fits Boutique254
+    <span>📍 Nairobi, Kenya | Prices in KSh</span>
+  </div>
+
+  <header class="header">
+    <a class="brand" href="#">
+      <div>ROYAL FITS <span>254</span></div>
+      <small>B O U T I Q U E</small>
+    </a>
+
+    <form id="searchForm" class="search">
+      <input id="searchInput" type="search"
+        placeholder="Search dresses, shoes, bags...">
+      <button type="submit">Search</button>
+    </form>
+
+    <button class="header-btn" id="accountBtn" type="button">
+      👤 Account
+    </button>
+
+    <button class="header-btn" id="cartBtn" type="button">
+      🛍 Cart (<span id="cartCount">0</span>)
+    </button>
+  </header>
+
+  <nav class="navigation" id="categories">
+    <button class="category active" data-category="All" type="button">All Products</button>
+    <button class="category" data-category="Women" type="button">Women</button>
+    <button class="category" data-category="Men" type="button">Men</button>
+    <button class="category" data-category="Shoes" type="button">Shoes</button>
+    <button class="category" data-category="Bags" type="button">Bags</button>
+    <button class="category" data-category="Accessories" type="button">Accessories</button>
+  </nav>
+
+  <main class="container">
+
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">YOUR STYLE. YOUR ROYALTY.</p>
+        <h1>Fashion that makes you feel royal.</h1>
+        <p>Discover beautiful clothing, shoes, handbags and accessories at affordable prices.</p>
+        <button class="gold-btn" id="shopBtn" type="button">
+          SHOP COLLECTION →
+        </button>
+      </div>
+      <div class="crown">👑</div>
+    </section>
+
+    <section class="benefits">
+      <div>🚚 <strong>Nairobi Delivery</strong><small>Delivery options available</small></div>
+      <div>💳 <strong>M-Pesa</strong><small>Payment integration coming soon</small></div>
+      <div>✨ <strong>Fashion Finds</strong><small>Styles for every occasion</small></div>
+      <div>🔒 <strong>Customer Accounts</strong><small>Secure customer sign-in</small></div>
+    </section>
+
+    <section id="shop">
+      <div class="section-heading">
+        <div>
+          <h2>Our Fashion Collection</h2>
+          <p>Find your next favourite look.</p>
+        </div>
+        <span id="productCount"></span>
+      </div>
+
+      <div class="products" id="productGrid"></div>
+    </section>
+
+    <section class="promo">
+      <div>
+        <h2>Discover your signature style 👑</h2>
+        <p>Join Royal Fits Boutique254 today.</p>
+      </div>
+      <button class="gold-btn" id="registerBtn" type="button">
+        CREATE ACCOUNT
+      </button>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <a class="brand footer-brand" href="#">
+          <div>ROYAL FITS <span>254</span></div>
+          <small>B O U T I Q U E</small>
+        </a>
+        <p>Your fashion destination in Nairobi, Kenya.</p>
+      </div>
+
+      <div>
+        <h3>QUICK LINKS</h3>
+        <a href="#shop">Shop products</a>
+        <button id="footerAccount" type="button">My account</button>
+      </div>
+
+      <div>
+        <h3>CUSTOMER CARE</h3>
+        <p>Delivery in Nairobi</p>
+        <p>Phone: 0180732821</p>
+        <p>Email: kelvinkinywa77@gmail.com</p>
+      </div>
+    </div>
+
+    <p class="copyright">
+      © <span id="year"></span> Royal Fits Boutique254. All rights reserved.
+    </p>
+  </footer>
+
+  <!-- SHOPPING CART -->
+  <div class="overlay hidden" id="cartOverlay">
+    <section class="panel">
+      <div class="panel-heading">
+        <h2>Your Shopping Cart</h2>
+        <button class="close-btn" data-close="cartOverlay" type="button">×</button>
+      </div>
+
+      <div id="cartItems"></div>
+
+      <div class="cart-total">
+        <span>Total</span>
+        <strong id="cartTotal">KSh 0</strong>
+      </div>
+
+      <p class="muted">
+        Delivery charges will be confirmed before an order is completed.
+      </p>
+
+      <button class="primary-btn full-width" id="checkoutBtn" type="button">
+        LOGIN TO PLACE ORDER
+      </button>
+
+      <button class="secondary-btn full-width"
+        data-close="cartOverlay" type="button">
+        Continue shopping
+      </button>
+    </section>
+  </div>
+
+  <!-- LOGIN AND REGISTRATION -->
+  <div class="overlay hidden" id="accountOverlay">
+    <section class="panel account-panel">
+
+      <div class="panel-heading">
+        <div>
+          <h2 id="accountTitle">Customer Login</h2>
+          <p class="muted">Welcome to Royal Fits Boutique254</p>
+        </div>
+        <button class="close-btn" data-close="accountOverlay" type="button">×</button>
+      </div>
+
+      <form id="accountForm">
+
+        <div id="registerFields" class="hidden">
+
+          <label for="fullName">Full name</label>
+          <input id="fullName" name="fullName" type="text"
+            autocomplete="name" placeholder="Your full name">
+
+          <label for="phone">Phone number</label>
+          <input id="phone" name="phone" type="tel"
+            autocomplete="tel" placeholder="07XX XXX XXX">
+
+        </div>
+
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email"
+          autocomplete="email" required placeholder="you@example.com">
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password"
+          autocomplete="current-password" minlength="6"
+          required placeholder="At least 6 characters">
+
+        <p class="muted" id="passwordHint">
+          Use your registered email and password.
+        </p>
+
+        <p class="error" id="formError" role="alert"></p>
+
+        <button class="primary-btn full-width" id="accountSubmit" type="submit">
+          LOGIN
+        </button>
+
+      </form>
+
+      <p class="switch-text">
+        <span id="switchPrompt">New customer?</span>
+        <button class="text-btn" id="switchAccount" type="button">
+          Register here
+        </button>
+      </p>
+
+      <p id="accountStatus" class="muted" aria-live="polite"></p>
+
+      <button id="logoutBtn" class="secondary-btn full-width hidden"
+        type="button">
+        LOG OUT
+      </button>
+
+      <button id="resetPasswordBtn" class="text-btn" type="button">
+        Forgot password?
+      </button>
+
+    </section>
+  </div>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+
+  <!-- PRODUCT IMAGE POPUP -->
+  <div id="imagePopup" class="image-popup" onclick="closeImage()">
+    <button class="close-popup" aria-label="Close image"
+      onclick="closeImage()">&times;</button>
+
+    <img id="popupImage" src="" alt="Product preview"
+      onclick="event.stopPropagation()">
+
+    <p id="popupName"></p>
+  </div>
+
+  <!-- Load Supabase BEFORE style.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="style.js"></script>
+
+</body>
+</html>
