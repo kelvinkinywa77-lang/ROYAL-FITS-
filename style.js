@@ -699,52 +699,224 @@ if (db) {
 
 /* 17. CUSTOMER ORDER HISTORY */
 
+
+/* 17. CUSTOMER ORDER HISTORY — FIXED */
+
 const myOrdersBtn = document.getElementById("myOrdersBtn");
 const myOrdersSection = document.getElementById("myOrdersSection");
 const myOrdersList = document.getElementById("myOrdersList");
 
-if (myOrdersBtn) {
-  myOrdersBtn.addEventListener("click", async () => {
-    if (!db) {
-      showToast("Database connection failed.");
-      return;
-    }
+async function loadMyOrders() {
+  if (!db) {
+    showToast("Database connection failed.");
+    return;
+  }
 
+  if (!myOrdersList) {
+    console.error("Missing HTML element: myOrdersList");
+    showToast("My Orders section could not be found.");
+    return;
+  }
+
+  myOrdersList.innerHTML = "<p>Loading your orders...</p>";
+
+  try {
+    // Get the currently logged-in customer
     const { data: sessionData, error: sessionError } =
       await db.auth.getSession();
 
-    if (sessionError) {
-      showToast("Could not check your login. Please try again.");
-      return;
-    }
+    if (sessionError) throw sessionError;
 
-    if (!sessionData.session) {
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      myOrdersList.innerHTML = "";
       setAccountMode(false);
       openOverlay("accountOverlay");
       showToast("Please log in to view your orders.");
       return;
     }
 
+    // Retrieve ONLY this customer's orders
+    const { data: orders, error } = await db
+      .from("orders")
+      .select(`
+        id,
+        user_id,
+        total_amount,
+        status,
+        created_at,
+        order_items (
+          product_name,
+          quantity,
+          unit_price,
+          image_url
+        )
+      `)
+      .eq("user_id", user.id)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false });
+
+    // Stop immediately if Supabase reports an error
+    if (error) {
+      console.error("My Orders database error:", error);
+      throw error;
+    }
+
+    // Display empty state only after a successful query
+    if (!orders || orders.length === 0) {
+      myOrdersList.innerHTML =
+        "<p>You have not placed any orders yet.</p>";
+      return;
+    }
+
+    // Display the customer's orders
+    myOrdersList.innerHTML = orders.map(order => `
+      <article class="customer-order">
+        <h3>Order #${escapeHTML(order.id)}</h3>
+
+        <p>
+          <strong>Date:</strong>
+          ${escapeHTML(
+            order.created_at
+              ? new Date(order.created_at).toLocaleString()
+              : "Date unavailable"
+          )}
+        </p>
+
+        <p>
+          <strong>Status:</strong>
+          ${escapeHTML(order.status || "pending")}
+        </p>
+
+        <div class="customer-order-items">
+          ${(order.order_items || []).map(item => `
+            <div class="customer-order-item">
+              ${item.image_url
+                ? `<img
+                    src="${escapeHTML(item.image_url)}"
+                    alt="${escapeHTML(item.product_name)}"
+                    onerror="this.style.display='none'"
+                  >`
+                : ""}
+
+              <div>
+                <strong>
+                  ${escapeHTML(item.product_name)}
+                </strong>
+                <p>Quantity: ${Number(item.quantity)}</p>
+                <p>Price: ${formatPrice(item.unit_price)}</p>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+
+        <p class="customer-order-total">
+          Total: ${formatPrice(order.total_amount)}
+        </p>
+
+        ${order.status === "pending" ? `
+          <button
+            type="button"
+            class="cancel-order-btn"
+            data-order-id="${escapeHTML(order.id)}">
+            Cancel Order
+          </button>
+        ` : ""}
+      </article>
+    `).join("");
+
+  } catch (error) {
+    console.error("Could not load customer orders:", error);
+
+    myOrdersList.innerHTML = `
+      <p>We could not load your orders. Please try again.</p>
+      <p class="error">${escapeHTML(error.message || "Database error")}</p>
+    `;
+  }
+}
+
+// Open My Orders and load fresh data
+if (myOrdersBtn) {
+  myOrdersBtn.addEventListener("click", async () => {
     myOrdersSection?.classList.remove("hidden");
     myOrdersSection?.scrollIntoView({ behavior: "smooth" });
 
-    myOrdersList.innerHTML = "<p>Loading your orders...</p>";
     myOrdersBtn.disabled = true;
 
     try {
-     const { data: orders, error } = await db
-  .from("orders")
-  .select(`
-    id,
-    total_amount,
-    status,
-    created_at,
-    order_items (
-      product_name,
-      quantity,
-      unit_price,
-      image_url
-    )
+      await loadMyOrders();
+    } finally {
+      myOrdersBtn.disabled = false;
+    }
+  });
+}
+
+
+/* 18. CANCEL A PENDING ORDER */
+
+if (myOrdersList) {
+  myOrdersList.addEventListener("click", async event => {
+    const button = event.target.closest(".cancel-order-btn");
+
+    if (!button || !db) return;
+
+    const orderId = button.dataset.orderId;
+
+    if (!confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Cancelling...";
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await db.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const user = sessionData.session?.user;
+
+      if (!user) {
+        throw new Error("Please log in first.");
+      }
+
+      // Cancel only this customer's pending order
+      const { data, error } = await db
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", orderId)
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "Order could not be cancelled. It may already be processed, or you may not have permission."
+        );
+      }
+
+      showToast("Order cancelled successfully.");
+
+      // Reload orders; cancelled orders will disappear
+      await loadMyOrders();
+
+    } catch (error) {
+      console.error("Cancel order error:", error);
+
+      alert(error.message || "Could not cancel the order.");
+
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = "Cancel Order";
+      }
+    }
+  });
+}
   `)
   .neq("status", "cancelled")
   .order("created_at", { ascending: false });
