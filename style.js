@@ -558,26 +558,113 @@ document.getElementById("resetPasswordBtn")?.addEventListener("click", async () 
 
 /* 14. CHECKOUT DEMO */
 
+/* 14. CHECKOUT: SAVE ORDERS TO SUPABASE */
+
 document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
   if (!cart.length) {
     showToast("Your cart is empty.");
     return;
   }
 
-  if (db) {
-    const { data } = await db.auth.getSession();
+  if (!db) {
+    showToast("Database connection failed. Please refresh.");
+    return;
+  }
 
-    if (!data.session) {
+  const checkoutButton = document.getElementById("checkoutBtn");
+  if (checkoutButton) {
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = "PLACING ORDER...";
+  }
+
+  let orderId = null;
+
+  try {
+    // Check that the customer is signed in
+    const { data: sessionData, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
       closeOverlay("cartOverlay");
       setAccountMode(false);
       openOverlay("accountOverlay");
-      showToast("Please log in before continuing.");
+      showToast("Please log in before placing your order.");
       return;
     }
-  }
 
-  showToast("You are signed in. Order placement still needs to be connected.");
+    // Keep a snapshot of the current cart
+    const cartSnapshot = cart.map(item => ({ ...item }));
+    const total = cartSnapshot.reduce(
+      (sum, item) =>
+        sum + Number(item.price || 0) * Number(item.quantity || 0),
+      0
+    );
+
+    // Save the main order
+    const { data: order, error: orderError } = await db
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        total_amount: total,
+        status: "pending"
+      })
+      .select("id")
+      .single();
+
+    if (orderError) throw orderError;
+
+    orderId = order.id;
+
+    // Save the products belonging to this order
+    const orderItems = cartSnapshot.map(item => ({
+      order_id: orderId,
+      product_name: item.name,
+      quantity: Number(item.quantity),
+      unit_price: Number(item.price),
+      image_url: item.image || null
+    }));
+
+    const { error: itemsError } = await db
+      .from("order_items")
+      .insert(orderItems);
+
+    if (itemsError) throw itemsError;
+
+    // Empty the cart only after both inserts succeed
+    cart = [];
+    updateCart();
+    closeOverlay("cartOverlay");
+
+    showToast("Order placed successfully! Order ID: " + orderId);
+
+    console.log("Order saved:", orderId);
+
+  } catch (error) {
+    console.error("Checkout error:", error);
+
+    if (orderId) {
+      showToast(
+        "Order items could not be saved. Contact support with order ID: " +
+        orderId
+      );
+    } else {
+      showToast(
+        "Could not place your order: " +
+        (error.message || "Please try again.")
+      );
+    }
+  } finally {
+    if (checkoutButton) {
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = "CHECKOUT";
+    }
+  }
 });
+
 
 
 /* 15. FOOTER YEAR */
