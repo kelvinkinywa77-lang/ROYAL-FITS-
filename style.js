@@ -696,3 +696,102 @@ if (db) {
     updateAccountStatus(session?.user || null);
   });
 }
+
+/* 17. CUSTOMER ORDER HISTORY */
+
+const myOrdersBtn = document.getElementById("myOrdersBtn");
+const myOrdersSection = document.getElementById("myOrdersSection");
+const myOrdersList = document.getElementById("myOrdersList");
+
+if (myOrdersBtn) {
+  myOrdersBtn.addEventListener("click", async () => {
+    if (!db) {
+      showToast("Database connection failed.");
+      return;
+    }
+
+    const { data: sessionData, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) {
+      showToast("Could not check your login. Please try again.");
+      return;
+    }
+
+    if (!sessionData.session) {
+      setAccountMode(false);
+      openOverlay("accountOverlay");
+      showToast("Please log in to view your orders.");
+      return;
+    }
+
+    myOrdersSection?.classList.remove("hidden");
+    myOrdersSection?.scrollIntoView({ behavior: "smooth" });
+
+    myOrdersList.innerHTML = "<p>Loading your orders...</p>";
+    myOrdersBtn.disabled = true;
+
+    try {
+      const { data: orders, error } = await db
+        .from("orders")
+        .select(`
+          id,
+          total_amount,
+          status,
+          created_at,
+          order_items (
+            product_name,
+            quantity,
+            unit_price,
+            image_url
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (!orders || orders.length === 0) {
+        myOrdersList.innerHTML =
+          "<p>You have not placed any orders yet.</p>";
+        return;
+      }
+
+      myOrdersList.innerHTML = orders.map(order => `
+        <article class="customer-order">
+          <h3>Order #${escapeHTML(order.id)}</h3>
+          <p><strong>Date:</strong>
+            ${escapeHTML(new Date(order.created_at).toLocaleString())}
+          </p>
+          <p><strong>Status:</strong>
+            ${escapeHTML(order.status)}
+          </p>
+          <div class="customer-order-items">
+            ${(order.order_items || []).map(item => `
+              <div class="customer-order-item">
+                ${item.image_url
+                  ? `<img src="${escapeHTML(item.image_url)}"
+                          alt="${escapeHTML(item.product_name)}">`
+                  : ""}
+                <div>
+                  <strong>${escapeHTML(item.product_name)}</strong>
+                  <p>Quantity: ${Number(item.quantity)}</p>
+                  <p>Price: ${formatPrice(item.unit_price)}</p>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+          <p class="customer-order-total">
+            Total: ${formatPrice(order.total_amount)}
+          </p>
+        </article>
+      `).join("");
+
+    } catch (error) {
+      console.error("Order history error:", error);
+      myOrdersList.innerHTML =
+        "<p>Could not load your orders. Please try again.</p>";
+    } finally {
+      myOrdersBtn.disabled = false;
+    }
+  });
+}
