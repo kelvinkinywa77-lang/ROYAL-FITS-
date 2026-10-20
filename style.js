@@ -732,21 +732,22 @@ if (myOrdersBtn) {
     myOrdersBtn.disabled = true;
 
     try {
-      const { data: orders, error } = await db
-        .from("orders")
-        .select(`
-          id,
-          total_amount,
-          status,
-          created_at,
-          order_items (
-            product_name,
-            quantity,
-            unit_price,
-            image_url
-          )
-        `)
-        .order("created_at", { ascending: false });
+     const { data: orders, error } = await db
+  .from("orders")
+  .select(`
+    id,
+    total_amount,
+    status,
+    created_at,
+    order_items (
+      product_name,
+      quantity,
+      unit_price,
+      image_url
+    )
+  `)
+  .neq("status", "cancelled")
+  .order("created_at", { ascending: false });
 
       if (error) throw error;
 
