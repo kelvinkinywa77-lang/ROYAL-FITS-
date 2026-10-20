@@ -556,7 +556,7 @@ document.getElementById("resetPasswordBtn")?.addEventListener("click", async () 
 });
 
 
-/* 14. CHECKOUT DEMO */
+
 
 /* 14. CHECKOUT: SAVE ORDERS TO SUPABASE */
 
@@ -783,6 +783,14 @@ if (myOrdersBtn) {
           <p class="customer-order-total">
             Total: ${formatPrice(order.total_amount)}
           </p>
+          ${order.status === "pending" ? `
+  <button
+    type="button"
+    class="cancel-order-btn"
+    data-order-id="${escapeHTML(order.id)}">
+    Cancel Order
+  </button>
+` : ""}
         </article>
       `).join("");
 
@@ -795,3 +803,59 @@ if (myOrdersBtn) {
     }
   });
 }
+/* CANCEL A PENDING ORDER */
+
+document.getElementById("myOrdersList")?.addEventListener(
+  "click",
+  async (event) => {
+    const button = event.target.closest(".cancel-order-btn");
+    if (!button) return;
+
+    const orderId = button.dataset.orderId;
+
+    if (!confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Cancelling...";
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await db.auth.getSession();
+
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) {
+        throw new Error("Please log in first.");
+      }
+
+      const { data, error } = await db
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", orderId)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "This order cannot be cancelled. It may already have been processed."
+        );
+      }
+
+      alert("Order cancelled successfully.");
+
+      // Refresh the My Orders section
+      document.getElementById("myOrdersBtn")?.click();
+
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      alert(error.message || "Could not cancel the order.");
+
+      button.disabled = false;
+      button.textContent = "Cancel Order";
+    }
+  }
+);
