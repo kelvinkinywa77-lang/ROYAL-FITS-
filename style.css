@@ -272,25 +272,37 @@ a {
 
 /* PRODUCT GRID */
 
+/* PRODUCT GRID */
 .products {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 17px;
-  padding-bottom: 40px;
+  gap: 10px;
+  padding-bottom: 25px;
 }
 
 /* PRODUCT CARDS */
-
 .product-card {
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 8px;
   background: #ffffff;
   border: 1px solid #eee5d8;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   min-width: 0;
 }
 
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.10);
+}
+
+/* PRODUCT IMAGES */
+.product-image-wrap {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: #eeeeee;
+}
 .product-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
