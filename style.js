@@ -749,7 +749,12 @@ if (myOrdersBtn) {
   .neq("status", "cancelled")
   .order("created_at", { ascending: false });
 
-      if (error) throw error;
+
+if (error) {
+  console.error("My Orders error:", error);
+
+  // Keep your existing error-handling code here
+}
 
       if (!orders || orders.length === 0) {
         myOrdersList.innerHTML =
