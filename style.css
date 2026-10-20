@@ -960,12 +960,12 @@ footer button {
   }
 
   .product-image-wrap {
-    height: 200px;
+    height: 250px;
   }
 
   .brand {
-    min-width: 100px;
-    font-size: 10px;
+    min-width: 130px;
+    font-size: 16px;
   }
 
   .header-btn {
