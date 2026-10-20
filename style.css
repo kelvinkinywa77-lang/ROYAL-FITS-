@@ -702,6 +702,31 @@ footer button {
   line-height: 1.6;
 }
 
+/* Control product images in My Orders */
+#myOrdersList .order-item img,
+#myOrdersList .customer-order-item img {
+  width: 80px !important;
+  height: 80px !important;
+  max-width: 80px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+/* Keep each ordered item neat */
+#myOrdersList .order-item,
+#myOrdersList .customer-order-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+/* Prevent order images from overflowing */
+#myOrdersList img {
+  display: block;
+}
+
 .secondary-btn {
   margin-top: 10px;
   background: white;
