@@ -612,6 +612,12 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
     orderId = order.id;
 
 const orderItems = cartSnapshot.map(item => ({
+
+    
+const orderItems = cartSnapshot.map(item => ({
+  order_id: orderId,
+
+const orderItems = cartSnapshot.map(item => ({
   order_id: orderId,
   product_id: Number(item.id),
   product_name: item.name,
@@ -632,10 +638,6 @@ if (itemsError) {
 }
 
 console.log("Order items saved:", savedItems);
-
-    
-const orderItems = cartSnapshot.map(item => ({
-  order_id: orderId,
 
   // Link the item to the existing product
   product_id: Number(item.id),
