@@ -611,13 +611,33 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
 
     orderId = order.id;
 
-    const orderItems = cartSnapshot.map(item => ({
-      order_id: orderId,
-      product_name: item.name,
-      quantity: Number(item.quantity),
-      unit_price: Number(item.price),
-      image_url: item.image || null
-    }));
+    
+const orderItems = cartSnapshot.map(item => ({
+  order_id: orderId,
+
+  // Link the item to the existing product
+  product_id: Number(item.id),
+
+  // Save the product details for My Orders
+  product_name: item.name,
+  quantity: Number(item.quantity),
+  price: Number(item.price),
+  unit_price: Number(item.price),
+  image_url: item.image || null
+}));
+
+const { data: savedItems, error: itemsError } = await db
+  .from("order_items")
+  .insert(orderItems)
+  .select();
+
+if (itemsError) {
+  console.error("Order items insert error:", itemsError);
+  throw itemsError;
+}
+
+console.log("Order items saved successfully:", savedItems);
+
 
     const { error: itemsError } = await db
       .from("order_items")
