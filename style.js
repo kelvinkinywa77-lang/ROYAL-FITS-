@@ -642,19 +642,26 @@ async function checkout() {
       image_url: item.image_url || ""
     }));
 
-    const { error: itemsError } = await db
-      .from("order_items")
-      .insert(orderItems);
+    const { data: savedItems, error: itemsError } = await db
+  .from("order_items")
+  .insert(orderItems)
+  .select();
 
-    if (itemsError) {
-      console.error("Order items error:", itemsError);
+if (itemsError) {
+  console.error(
+    "ORDER ITEMS INSERT FAILED:",
+    JSON.stringify(itemsError, null, 2)
+  );
 
-      throw new Error(
-        "Order " + order.id +
-        " was created, but saving its items failed. " +
-        itemsError.message
-      );
-    }
+  alert(
+    "Order was created, but order items failed: " +
+    itemsError.message
+  );
+
+  return;
+}
+
+console.log("ORDER ITEMS SAVED:", savedItems);
 
     /*
       STEP 3: CLEAR THE CART AFTER BOTH INSERTS SUCCEED.
