@@ -617,27 +617,6 @@ const orderItems = cartSnapshot.map(item => ({
 const orderItems = cartSnapshot.map(item => ({
   order_id: orderId,
 
-const orderItems = cartSnapshot.map(item => ({
-  order_id: orderId,
-  product_id: Number(item.id),
-  product_name: item.name,
-  quantity: Number(item.quantity),
-  price: Number(item.price),
-  unit_price: Number(item.price),
-  image_url: item.image || null
-}));
-
-const { data: savedItems, error: itemsError } = await db
-  .from("order_items")
-  .insert(orderItems)
-  .select();
-
-if (itemsError) {
-  console.error("Order items insert error:", itemsError);
-  throw itemsError;
-}
-
-console.log("Order items saved:", savedItems);
 
   // Link the item to the existing product
   product_id: Number(item.id),
