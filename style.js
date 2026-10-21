@@ -1,6 +1,7 @@
+
 /* =====================================================
    ROYAL FITS BOUTIQUE254
-   Products, Authentication, Cart and Orders
+   Supabase products, authentication, cart and orders
 ===================================================== */
 
 /* 1. SUPABASE CONNECTION */
@@ -11,26 +12,31 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_iUUvMivOvVBbk4XvCCDWtQ_iOWSra5g";
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+let db = null;
 
-/* 2. GLOBAL VARIABLES */
+if (window.supabase) {
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+} else {
+  console.error("Supabase library did not load.");
+}
 
-let products = [];
-let cart = JSON.parse(localStorage.getItem("royalFitsCart") || "[]");
-let currentUser = null;
-let selectedCategory = "all";
+/* 2. PRODUCT DATA */
+
+const localProducts = [];
+
+let products = [...localProducts];
+let cart = [];
+let selectedCategory = "All";
+let searchTerm = "";
+let isRegistering = false;
 
 /* 3. HELPER FUNCTIONS */
 
-function getElement(id) {
-  return document.getElementById(id);
-}
-
-function showMessage(message) {
-  alert(message);
+function formatPrice(value) {
+  return "KSh " + Number(value || 0).toLocaleString("en-KE");
 }
 
 function escapeHTML(value) {
@@ -43,744 +49,976 @@ function escapeHTML(value) {
   })[character]);
 }
 
-function formatPrice(price) {
-  return "KSh " + Number(price || 0).toLocaleString("en-KE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) {
+    console.log(message);
+    return;
+  }
+
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+
+  clearTimeout(showToast.timer);
+
+  showToast.timer = setTimeout(() => {
+    toast.classList.add("hidden");
+  }, 3000);
 }
 
-function saveCart() {
-  localStorage.setItem("royalFitsCart", JSON.stringify(cart));
+function openOverlay(id) {
+  document.getElementById(id)?.classList.remove("hidden");
+}
+
+function closeOverlay(id) {
+  document.getElementById(id)?.classList.add("hidden");
 }
 
 /* 4. LOAD PRODUCTS FROM SUPABASE */
 
 async function loadProducts() {
-  const container =
-    getElement("productsContainer") ||
-    getElement("productContainer") ||
-    getElement("products");
-
-  if (!container) {
-    console.error("Products container was not found in HTML.");
+  if (!db) {
+    displayProducts();
+    updateCart();
     return;
   }
 
-  container.innerHTML = "<p>Loading products...</p>";
+  try {
+    const { data, error } = await db
+      .from("products")
+      .select("*")
+      .eq("is_active", true)
+      .order("id", { ascending: true });
 
-  const { data, error } = await db
-    .from("products")
-    .select("*")
-    .order("created_at", { ascending: false });
+    if (error) throw error;
 
-  if (error) {
-    console.error("Product loading error:", error);
-    container.innerHTML =
-      "<p>Unable to load products. Please try again later.</p>";
-    return;
+    if (data && data.length) {
+      products = data.map(row => ({
+        id: Number(row.id),
+        name: row.name,
+        category: row.category === "Womens" ? "Women" : row.category,
+        price: Number(row.price || 0),
+        old: Number(row.old_price || 0),
+        image: row.image_url || "",
+        color: row.color || "#eeeeee",
+        rating: Number(row.rating || 4.5),
+        stock: row.stock == null ? null : Number(row.stock)
+      }));
+    } else {
+      products = [...localProducts];
+    }
+  } catch (error) {
+    console.error("Could not load products:", error);
+    products = [...localProducts];
+    showToast("Could not load products from the database.");
   }
 
-  products = (data || []).filter(product =>
-    product.is_active !== false
-  );
-
-  displayProducts(products);
+  displayProducts();
+  updateCart();
 }
 
 /* 5. DISPLAY PRODUCTS */
 
-function displayProducts(list = products) {
-  const container =
-    getElement("productsContainer") ||
-    getElement("productContainer") ||
-    getElement("products");
+function displayProducts() {
+  const grid = document.getElementById("productGrid");
+  const count = document.getElementById("productCount");
 
-  if (!container) return;
+  if (!grid) return;
 
-  if (!list.length) {
-    container.innerHTML = "<p>No products found.</p>";
+  const filtered = products.filter(product => {
+    const categoryMatches =
+      selectedCategory === "All" ||
+      product.category === selectedCategory;
+
+    const searchMatches =
+      String(product.name).toLowerCase().includes(searchTerm) ||
+      String(product.category).toLowerCase().includes(searchTerm);
+
+    return categoryMatches && searchMatches;
+  });
+
+  if (count) {
+    count.textContent =
+      `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
+  }
+
+  if (!filtered.length) {
+    grid.innerHTML =
+      '<p class="empty-message">No products found.</p>';
     return;
   }
 
-  container.innerHTML = list.map(product => {
-    const image = product.image_url || "";
-    const name = escapeHTML(product.name);
-    const category = escapeHTML(product.category);
+  grid.innerHTML = filtered.map(product => {
     const price = Number(product.price || 0);
-    const oldPrice = Number(product.old_price || 0);
-    const stock = Number(product.stock ?? 0);
-    const colour = escapeHTML(product.colour || product.color || "");
+    const oldPrice = Number(product.old || 0);
+
+    const hasStock =
+      product.stock !== undefined && product.stock !== null;
+
+    const stock = hasStock ? Number(product.stock) : null;
+    const soldOut = hasStock && stock <= 0;
+
+    const discount =
+      oldPrice > price && oldPrice > 0
+        ? Math.round((1 - price / oldPrice) * 100)
+        : 0;
 
     return `
-      <div class="product-card">
-
-        <img
-          src="${escapeHTML(image)}"
-          alt="${name}"
-          class="product-image"
-          onclick="showImage('${escapeHTML(image)}')"
-          onerror="this.style.display='none'"
+      <article class="product-card">
+        <div
+          class="product-image-wrap"
+          style="background:${escapeHTML(product.color || "#eeeeee")}"
         >
+          <img
+            src="${escapeHTML(product.image)}"
+            alt="${escapeHTML(product.name)}"
+            class="product-image"
+            loading="lazy"
+            style="cursor:pointer"
+            onclick="showImage(this.src, this.alt)"
+            onerror="this.onerror=null; this.style.opacity='0.4';"
+          >
 
-        <h3>${name}</h3>
+          ${discount > 0
+            ? `<span class="discount-badge">${discount}% OFF</span>`
+            : ""}
+        </div>
 
-        <p>${category}</p>
+        <div class="product-info">
+          <p class="product-category">
+            ${escapeHTML(product.category)}
+          </p>
 
-        ${colour ? `<p>Colour: ${colour}</p>` : ""}
+          <h3>${escapeHTML(product.name)}</h3>
 
-        <p class="product-price">
-          ${formatPrice(price)}
-        </p>
+          <p class="product-rating">
+            ⭐ ${Number(product.rating || 4.5)} / 5
+          </p>
 
-        ${
-          oldPrice > price
-            ? `<p class="old-price">
-                 <del>${formatPrice(oldPrice)}</del>
-               </p>`
-            : ""
-        }
+          <div class="product-prices">
+            <strong>${formatPrice(price)}</strong>
+            ${oldPrice > price
+              ? `<del>${formatPrice(oldPrice)}</del>`
+              : ""}
+          </div>
 
-        <p>Stock: ${stock}</p>
+          <p class="stock-label">
+            ${!hasStock
+              ? "Stock not synced"
+              : stock > 0
+                ? `${stock} in stock`
+                : "Out of stock"}
+          </p>
 
-        <button
-          type="button"
-          onclick="addToCart(${Number(product.id)})"
-          ${stock <= 0 ? "disabled" : ""}
-        >
-          ${stock <= 0 ? "Out of Stock" : "Add to Cart"}
-        </button>
-
-      </div>
+          <button
+            class="primary-btn full-width"
+            onclick="addToCart(${Number(product.id)})"
+            ${soldOut ? "disabled" : ""}
+          >
+            ${soldOut ? "OUT OF STOCK" : "ADD TO CART 🛍"}
+          </button>
+        </div>
+      </article>
     `;
   }).join("");
 }
 
 /* 6. PRODUCT IMAGE POPUP */
 
-function showImage(imageUrl) {
-  const popup = getElement("imagePopup");
-  const popupImage = getElement("popupImage");
+function showImage(image, name) {
+  const popup = document.getElementById("imagePopup");
+  const popupImage = document.getElementById("popupImage");
+  const popupName = document.getElementById("popupName");
 
-  if (popup && popupImage) {
-    popupImage.src = imageUrl;
-    popup.style.display = "flex";
-  } else {
-    window.open(imageUrl, "_blank");
-  }
+  if (!popup || !popupImage || !popupName) return;
+
+  popupImage.src = image;
+  popupImage.alt = name;
+  popupName.textContent = name;
+  popup.style.display = "flex";
+  document.body.style.overflow = "hidden";
 }
 
 function closeImage() {
-  const popup = getElement("imagePopup");
+  const popup = document.getElementById("imagePopup");
 
-  if (popup) {
-    popup.style.display = "none";
-  }
+  if (popup) popup.style.display = "none";
+
+  document.body.style.overflow = "";
 }
 
-/* 7. SEARCH PRODUCTS */
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeImage();
+});
 
-function searchProducts() {
-  const input =
-    getElement("searchInput") ||
-    getElement("searchBar") ||
-    getElement("search");
+/* 7. SHOPPING CART */
 
-  const term = input ? input.value.toLowerCase().trim() : "";
-
-  const filtered = products.filter(product => {
-    const matchesSearch =
-      String(product.name || "").toLowerCase().includes(term) ||
-      String(product.category || "").toLowerCase().includes(term);
-
-    const matchesCategory =
-      selectedCategory === "all" ||
-      String(product.category || "").toLowerCase() ===
-        selectedCategory.toLowerCase();
-
-    return matchesSearch && matchesCategory;
-  });
-
-  displayProducts(filtered);
-}
-
-/* 8. FILTER BY CATEGORY */
-
-function filterCategory(category) {
-  selectedCategory = category || "all";
-  searchProducts();
-}
-
-/* 9. ADD PRODUCTS TO CART */
-
-function addToCart(productId) {
+function addToCart(id) {
   const product = products.find(
-    item => Number(item.id) === Number(productId)
+    item => Number(item.id) === Number(id)
   );
 
   if (!product) {
-    showMessage("Product not found.");
+    showToast("Product not found.");
     return;
   }
 
-  const stock = Number(product.stock ?? 0);
-
-  if (stock <= 0) {
-    showMessage("This product is out of stock.");
-    return;
-  }
+  const hasStock =
+    product.stock !== undefined && product.stock !== null;
 
   const existing = cart.find(
-    item => Number(item.id) === Number(productId)
+    item => Number(item.id) === Number(id)
   );
 
-  if (existing) {
-    if (Number(existing.quantity) >= stock) {
-      showMessage("You cannot add more than the available stock.");
-      return;
-    }
-
-    existing.quantity = Number(existing.quantity) + 1;
-  } else {
-    cart.push({
-      id: product.id,
-      name: product.name,
-      price: Number(product.price),
-      image_url: product.image_url || "",
-      quantity: 1
-    });
+  if (
+    hasStock &&
+    (existing?.quantity || 0) >= Number(product.stock)
+  ) {
+    showToast("Sorry, there is not enough stock available.");
+    return;
   }
 
-  saveCart();
-  displayCart();
+  if (existing) {
+    existing.quantity++;
+  } else {
+    cart.push({ ...product, quantity: 1 });
+  }
 
-  showMessage(product.name + " added to cart.");
+  updateCart();
+  showToast("Product added to your cart!");
 }
 
-/* 10. DISPLAY CART */
+function removeFromCart(id) {
+  cart = cart.filter(
+    item => Number(item.id) !== Number(id)
+  );
 
-function displayCart() {
-  const container =
-    getElement("cartItems") ||
-    getElement("cartContainer");
+  updateCart();
+}
 
-  if (!container) {
-    updateCartCount();
-    return;
+function updateCart() {
+  const count = document.getElementById("cartCount");
+  const itemsElement = document.getElementById("cartItems");
+  const totalElement = document.getElementById("cartTotal");
+
+  const totalItems = cart.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
+  const total = cart.reduce(
+    (sum, item) =>
+      sum + Number(item.price || 0) * item.quantity,
+    0
+  );
+
+  if (count) count.textContent = totalItems;
+
+  if (totalElement) {
+    totalElement.textContent = formatPrice(total);
   }
+
+  if (!itemsElement) return;
 
   if (!cart.length) {
-    container.innerHTML = "<p>Your cart is empty.</p>";
-    updateCartCount();
-    updateCartTotal();
+    itemsElement.innerHTML = "<p>Your cart is empty.</p>";
     return;
   }
 
-  container.innerHTML = cart.map(item => `
+  itemsElement.innerHTML = cart.map(item => `
     <div class="cart-item">
-
       <img
-        src="${escapeHTML(item.image_url)}"
+        class="cart-image"
+        src="${escapeHTML(item.image || "")}"
         alt="${escapeHTML(item.name)}"
-        width="70"
-        onerror="this.style.display='none'"
       >
 
-      <div>
+      <div class="cart-item-details">
         <h4>${escapeHTML(item.name)}</h4>
-
         <p>${formatPrice(item.price)}</p>
-
-        <label>
-          Quantity:
-          <input
-            type="number"
-            min="1"
-            value="${Number(item.quantity)}"
-            onchange="updateQuantity(${Number(item.id)}, this.value)"
-          >
-        </label>
-
-        <p>
-          Subtotal:
-          ${formatPrice(Number(item.price) * Number(item.quantity))}
-        </p>
+        <p>Quantity: ${item.quantity}</p>
+        <p>Subtotal: ${formatPrice(item.price * item.quantity)}</p>
 
         <button
-          type="button"
+          class="text-btn"
           onclick="removeFromCart(${Number(item.id)})"
         >
           Remove
         </button>
       </div>
-
     </div>
   `).join("");
-
-  updateCartCount();
-  updateCartTotal();
 }
 
-/* 11. UPDATE CART QUANTITY */
+/* 8. CATEGORY FILTERS */
 
-function updateQuantity(productId, quantity) {
-  const item = cart.find(
-    product => Number(product.id) === Number(productId)
-  );
+document.querySelectorAll(".category").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".category").forEach(item => {
+      item.classList.remove("active");
+    });
 
-  if (!item) return;
+    button.classList.add("active");
 
-  const requestedQuantity = Math.floor(Number(quantity));
+    selectedCategory = button.dataset.category || "All";
 
-  if (!Number.isFinite(requestedQuantity) || requestedQuantity < 1) {
-    showMessage("Enter a valid quantity.");
-    displayCart();
+    displayProducts();
+  });
+});
+
+/* 9. SEARCH */
+
+const searchForm = document.getElementById("searchForm");
+const searchInput = document.getElementById("searchInput");
+
+if (searchForm) {
+  searchForm.addEventListener("submit", event => {
+    event.preventDefault();
+
+    searchTerm = searchInput
+      ? searchInput.value.trim().toLowerCase()
+      : "";
+
+    displayProducts();
+
+    document.getElementById("shop")?.scrollIntoView({
+      behavior: "smooth"
+    });
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener("input", event => {
+    searchTerm = event.target.value.trim().toLowerCase();
+    displayProducts();
+  });
+}
+
+/* 10. NAVIGATION AND OVERLAYS */
+
+document.getElementById("shopBtn")?.addEventListener("click", () => {
+  document.getElementById("shop")?.scrollIntoView({
+    behavior: "smooth"
+  });
+});
+
+document.getElementById("cartBtn")?.addEventListener("click", () => {
+  updateCart();
+  openOverlay("cartOverlay");
+});
+
+document.querySelectorAll("[data-close]").forEach(button => {
+  button.addEventListener("click", () => {
+    closeOverlay(button.dataset.close);
+  });
+});
+
+document.querySelectorAll(".overlay").forEach(overlay => {
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) {
+      overlay.classList.add("hidden");
+    }
+  });
+});
+
+/* 11. LOGIN / REGISTRATION MODE */
+
+function setAccountMode(registering) {
+  isRegistering = registering;
+
+  const title = document.getElementById("accountTitle");
+  const submit = document.getElementById("accountSubmit");
+  const fields = document.getElementById("registerFields");
+  const prompt = document.getElementById("switchPrompt");
+  const switchButton = document.getElementById("switchAccount");
+  const hint = document.getElementById("passwordHint");
+  const password = document.getElementById("password");
+  const fullName = document.getElementById("fullName");
+  const phone = document.getElementById("phone");
+  const error = document.getElementById("formError");
+
+  if (title) {
+    title.textContent = registering
+      ? "Create Your Account"
+      : "Customer Login";
+  }
+
+  if (submit) {
+    submit.textContent = registering ? "REGISTER" : "LOGIN";
+  }
+
+  if (fields) {
+    fields.classList.toggle("hidden", !registering);
+  }
+
+  if (prompt) {
+    prompt.textContent = registering
+      ? "Already have an account?"
+      : "New customer?";
+  }
+
+  if (switchButton) {
+    switchButton.textContent = registering
+      ? "Login here"
+      : "Register here";
+  }
+
+  if (hint) {
+    hint.textContent = registering
+      ? "Choose a password with at least 12 characters."
+      : "Use your registered email and password.";
+  }
+
+  if (password) {
+    password.autocomplete = registering
+      ? "new-password"
+      : "current-password";
+  }
+
+  if (fullName) fullName.required = registering;
+  if (phone) phone.required = registering;
+  if (error) error.textContent = "";
+}
+
+document.getElementById("accountBtn")?.addEventListener("click", () => {
+  setAccountMode(false);
+  openOverlay("accountOverlay");
+});
+
+document.getElementById("footerAccount")?.addEventListener("click", () => {
+  setAccountMode(false);
+  openOverlay("accountOverlay");
+});
+
+document.getElementById("registerBtn")?.addEventListener("click", () => {
+  setAccountMode(true);
+  openOverlay("accountOverlay");
+});
+
+document.getElementById("switchAccount")?.addEventListener("click", () => {
+  setAccountMode(!isRegistering);
+});
+
+/* 12. CUSTOMER REGISTRATION AND LOGIN */
+
+const accountForm = document.getElementById("accountForm");
+
+if (accountForm) {
+  accountForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const errorElement = document.getElementById("formError");
+    const submitButton = document.getElementById("accountSubmit");
+
+    const email = document.getElementById("email")?.value.trim() || "";
+    const password = document.getElementById("password")?.value || "";
+    const fullName = document.getElementById("fullName")?.value.trim() || "";
+    const phone = document.getElementById("phone")?.value.trim() || "";
+
+    if (errorElement) errorElement.textContent = "";
+
+    if (!db) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Supabase did not load. Check your connection.";
+      }
+      return;
+    }
+
+    if (!email || !password) {
+      if (errorElement) {
+        errorElement.textContent = "Enter your email and password.";
+      }
+      return;
+    }
+
+    if (isRegistering && password.length < 12) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Use a password of at least 12 characters.";
+      }
+      return;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "PLEASE WAIT...";
+    }
+
+    try {
+      if (isRegistering) {
+        const { data, error } = await db.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              phone: phone
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.session) {
+          showToast("Registration successful!");
+          closeOverlay("accountOverlay");
+          await updateAccountStatus(data.user);
+        } else {
+          if (errorElement) {
+            errorElement.textContent =
+              "Account created. Check your email for a confirmation link before logging in.";
+          }
+        }
+      } else {
+        const { data, error } = await db.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) throw error;
+
+        showToast("Login successful. Welcome!");
+        closeOverlay("accountOverlay");
+        await updateAccountStatus(data.user);
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+
+      if (errorElement) {
+        errorElement.textContent =
+          error.message || "Authentication failed. Please try again.";
+      }
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = isRegistering ? "REGISTER" : "LOGIN";
+      }
+    }
+  });
+}
+
+/* 13. ACCOUNT STATUS, LOGOUT AND PASSWORD RESET */
+
+async function updateAccountStatus(user) {
+  const status = document.getElementById("accountStatus");
+  const logoutButton = document.getElementById("logoutBtn");
+
+  if (status) {
+    status.textContent = user
+      ? `Signed in as ${user.email}`
+      : "You are not signed in.";
+  }
+
+  if (logoutButton) {
+    logoutButton.classList.toggle("hidden", !user);
+  }
+}
+
+document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+  if (!db) return;
+
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    showToast("Could not log out. Please try again.");
+    console.error("Logout error:", error);
     return;
   }
 
-  const product = products.find(
-    product => Number(product.id) === Number(productId)
-  );
+  await updateAccountStatus(null);
+  showToast("You have logged out.");
+});
 
-  if (product && requestedQuantity > Number(product.stock ?? 0)) {
-    showMessage("The requested quantity exceeds available stock.");
-    displayCart();
+document.getElementById("resetPasswordBtn")?.addEventListener("click", async () => {
+  if (!db) return;
+
+  const email = document.getElementById("email")?.value.trim() || "";
+  const errorElement = document.getElementById("formError");
+
+  if (!email) {
+    if (errorElement) {
+      errorElement.textContent = "Enter your email address first.";
+    }
     return;
-  }
-
-  item.quantity = requestedQuantity;
-
-  saveCart();
-  displayCart();
-}
-
-/* 12. REMOVE FROM CART */
-
-function removeFromCart(productId) {
-  cart = cart.filter(
-    item => Number(item.id) !== Number(productId)
-  );
-
-  saveCart();
-  displayCart();
-}
-
-/* 13. CART COUNT */
-
-function updateCartCount() {
-  const count = cart.reduce(
-    (total, item) => total + Number(item.quantity || 0),
-    0
-  );
-
-  const element = getElement("cartCount");
-
-  if (element) {
-    element.textContent = count;
-  }
-}
-
-/* 14. CART TOTAL */
-
-function updateCartTotal() {
-  const total = cart.reduce(
-    (sum, item) =>
-      sum + Number(item.price) * Number(item.quantity),
-    0
-  );
-
-  const element = getElement("cartTotal");
-
-  if (element) {
-    element.textContent = formatPrice(total);
-  }
-
-  return total;
-}
-/* =====================================================
-   16. CHECKOUT AND SAVE ORDERS
-===================================================== */
-
-async function checkout() {
-  if (!currentUser) {
-    showMessage("Please log in before placing an order.");
-    return;
-  }
-
-  if (!cart.length) {
-    showMessage("Your cart is empty.");
-    return;
-  }
-
-  const checkoutButton = getElement("checkoutButton");
-
-  if (checkoutButton) {
-    checkoutButton.disabled = true;
-    checkoutButton.textContent = "Processing...";
   }
 
   try {
-    /*
-      Recheck products and stock before creating an order.
-    */
+    const redirectTo =
+      window.location.origin + window.location.pathname;
 
-    const productIds = cart.map(item => Number(item.id));
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo
+    });
 
-    const { data: latestProducts, error: productError } = await db
-      .from("products")
-      .select("id, name, price, stock, image_url, is_active")
-      .in("id", productIds);
+    if (error) throw error;
 
-    if (productError) throw productError;
+    if (errorElement) {
+      errorElement.textContent =
+        "If the email is registered, a password reset link will be sent.";
+    }
+  } catch (error) {
+    console.error("Password reset error:", error);
 
-    for (const item of cart) {
-      const latestProduct = (latestProducts || []).find(
-        product => Number(product.id) === Number(item.id)
-      );
+    if (errorElement) {
+      errorElement.textContent =
+        error.message || "Could not send the password reset email.";
+    }
+  }
+});
 
-      if (!latestProduct || latestProduct.is_active === false) {
-        throw new Error(
-          item.name + " is no longer available."
-        );
-      }
+/* 14. CHECKOUT: SAVE ORDERS TO SUPABASE */
 
-      if (
-        Number(item.quantity) < 1 ||
-        Number(item.quantity) > Number(latestProduct.stock ?? 0)
-      ) {
-        throw new Error(
-          "Insufficient stock for " + latestProduct.name + "."
-        );
-      }
+document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
+  if (!cart.length) {
+    showToast("Your cart is empty.");
+    return;
+  }
 
-      item.name = latestProduct.name;
-      item.price = Number(latestProduct.price);
-      item.image_url = latestProduct.image_url || "";
+  if (!db) {
+    showToast("Database connection failed. Please refresh.");
+    return;
+  }
+
+  const checkoutButton = document.getElementById("checkoutBtn");
+
+  if (checkoutButton) {
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = "PLACING ORDER...";
+  }
+
+  let orderId = null;
+
+  try {
+    const { data: sessionData, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      closeOverlay("cartOverlay");
+      setAccountMode(false);
+      openOverlay("accountOverlay");
+      showToast("Please log in before placing your order.");
+      return;
     }
 
-    saveCart();
+    const cartSnapshot = cart.map(item => ({ ...item }));
 
-    const totalAmount = cart.reduce(
+    const total = cartSnapshot.reduce(
       (sum, item) =>
-        sum + Number(item.price) * Number(item.quantity),
+        sum + Number(item.price || 0) * Number(item.quantity || 0),
       0
     );
 
-    /*
-      STEP 1: CREATE THE ORDER.
-      orders.user_id must match the logged-in user's UUID.
-    */
+    if (!Number.isFinite(total) || total <= 0) {
+      throw new Error("The order total is invalid.");
+    }
 
+    // Save the main order.
     const { data: order, error: orderError } = await db
       .from("orders")
       .insert({
-        user_id: currentUser.id,
-        total_amount: totalAmount,
+        user_id: user.id,
+        total_amount: total,
         status: "pending"
       })
-      .select("id, user_id, total_amount, status, created_at")
+      .select("id")
       .single();
 
     if (orderError) throw orderError;
 
-    /*
-      STEP 2: CREATE THE ORDER ITEMS.
-      order_id must match orders.id.
-      product_id must match products.id.
-      Keep this array and insert statement only once.
-    */
+    orderId = order.id;
 
-    const orderItems = cart.map(item => ({
-      order_id: order.id,
-      product_id: Number(item.id),
+    // Save all items belonging to this order.
+    const orderItems = cartSnapshot.map(item => ({
+      order_id: orderId,
       product_name: item.name,
       quantity: Number(item.quantity),
-      price: Number(item.price),
       unit_price: Number(item.price),
-      image_url: item.image_url || ""
+      image_url: item.image || null
     }));
 
     const { error: itemsError } = await db
       .from("order_items")
       .insert(orderItems);
 
-    if (itemsError) {
-      console.error("Order items error:", itemsError);
-
-      throw new Error(
-        "Order " + order.id +
-        " was created, but saving its items failed. " +
-        itemsError.message
-      );
-    }
-
-    /*
-      STEP 3: CLEAR THE CART AFTER BOTH INSERTS SUCCEED.
-    */
+    if (itemsError) throw itemsError;
 
     cart = [];
-    saveCart();
-    displayCart();
+    updateCart();
+    closeOverlay("cartOverlay");
 
-    showMessage(
-      "Order placed successfully! Order number: " + order.id
-    );
+    showToast("Order placed successfully! Order ID: " + orderId);
 
-    await loadMyOrders();
-
+    console.log("Order saved successfully:", orderId);
   } catch (error) {
     console.error("Checkout error:", error);
-    showMessage(error.message || "Unable to place your order.");
+
+    if (orderId) {
+      showToast(
+        "Order items could not be saved. Contact support with order ID: " +
+        orderId
+      );
+    } else {
+      showToast(
+        "Could not place your order: " +
+        (error.message || "Please try again.")
+      );
+    }
   } finally {
     if (checkoutButton) {
       checkoutButton.disabled = false;
-      checkoutButton.textContent = "Checkout";
+      checkoutButton.textContent = "CHECKOUT";
     }
   }
-}/* =====================================================
-   17. LOAD MY ORDERS
-===================================================== */
+});
+
+/* 15. FOOTER YEAR */
+
+const yearElement = document.getElementById("year");
+
+if (yearElement) {
+  yearElement.textContent = new Date().getFullYear();
+}
+
+/* 16. CUSTOMER ORDER HISTORY */
+
+const myOrdersBtn = document.getElementById("myOrdersBtn");
+const myOrdersSection = document.getElementById("myOrdersSection");
+const myOrdersList = document.getElementById("myOrdersList");
 
 async function loadMyOrders() {
-  const container =
-    getElement("myOrdersContainer") ||
-    getElement("orderList") ||
-    getElement("myOrders");
+  if (!db) {
+    throw new Error("Database connection failed.");
+  }
 
-  if (!container) return;
+  if (!myOrdersList) {
+    throw new Error("My Orders list was not found in the HTML.");
+  }
 
-  if (!currentUser) {
-    container.innerHTML =
-      "<p>Please log in to view your orders.</p>";
+  const { data: sessionData, error: sessionError } =
+    await db.auth.getSession();
+
+  if (sessionError) throw sessionError;
+
+  const user = sessionData.session?.user;
+
+  if (!user) {
+    setAccountMode(false);
+    openOverlay("accountOverlay");
+    showToast("Please log in to view your orders.");
     return;
   }
 
-  container.innerHTML = "<p>Loading your orders...</p>";
+  myOrdersList.innerHTML = "<p>Loading your orders...</p>";
 
+  // IMPORTANT: retrieve only this customer's orders.
   const { data: orders, error } = await db
     .from("orders")
-    .select("*")
-    .eq("user_id", currentUser.id)
+    .select(`
+      id,
+      user_id,
+      total_amount,
+      status,
+      created_at,
+      order_items (
+        product_name,
+        quantity,
+        unit_price,
+        image_url
+      )
+    `)
+    .eq("user_id", user.id)
+    .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("My Orders error:", error);
-    container.innerHTML =
-      "<p>Unable to load orders: " +
-      escapeHTML(error.message) + "</p>";
+    console.error("My Orders database error:", error);
+    throw error;
+  }
+
+  if (!orders || orders.length === 0) {
+    myOrdersList.innerHTML =
+      "<p>You have not placed any orders yet.</p>";
     return;
   }
 
-  /*
-    Hide cancelled orders from the My Orders list.
-  */
+  myOrdersList.innerHTML = orders.map(order => `
+    <article class="customer-order">
+      <h3>Order #${escapeHTML(order.id)}</h3>
 
-  const visibleOrders = (orders || []).filter(
-    order => String(order.status).toLowerCase() !== "cancelled"
-  );
+      <p>
+        <strong>Date:</strong>
+        ${escapeHTML(
+          order.created_at
+            ? new Date(order.created_at).toLocaleString()
+            : "Unavailable"
+        )}
+      </p>
 
-  if (!visibleOrders.length) {
-    container.innerHTML = "<p>You have no active orders.</p>";
-    return;
-  }
+      <p>
+        <strong>Status:</strong>
+        ${escapeHTML(order.status || "pending")}
+      </p>
 
-  const orderIds = visibleOrders.map(order => order.id);
+      <div class="customer-order-items">
+        ${(order.order_items || []).map(item => `
+          <div class="customer-order-item">
+            ${item.image_url ? `
+              <img
+                src="${escapeHTML(item.image_url)}"
+                alt="${escapeHTML(item.product_name)}"
+                loading="lazy"
+                onerror="this.style.display='none'"
+              >
+            ` : ""}
 
-  const { data: items, error: itemsError } = await db
-    .from("order_items")
-    .select(
-      "order_id, product_name, quantity, unit_price, image_url"
-    )
-    .in("order_id", orderIds);
-
-  if (itemsError) {
-    console.error("Order items loading error:", itemsError);
-    container.innerHTML =
-      "<p>Unable to load order items: " +
-      escapeHTML(itemsError.message) + "</p>";
-    return;
-  }
-
-  container.innerHTML = visibleOrders.map(order => {
-    const orderItems = (items || []).filter(
-      item => String(item.order_id) === String(order.id)
-    );
-
-    const status = String(order.status || "pending").toLowerCase();
-
-    return `
-      <div class="order-card">
-
-        <h3>Order #${escapeHTML(order.id)}</h3>
-
-        <p>
-          Date:
-          ${escapeHTML(
-            order.created_at
-              ? new Date(order.created_at).toLocaleString()
-              : "Not available"
-          )}
-        </p>
-
-        <p>
-          Status:
-          ${escapeHTML(status)}
-        </p>
-
-        <p>
-          Total:
-          ${formatPrice(order.total_amount)}
-        </p>
-
-        <div class="order-items">
-          ${
-            orderItems.length
-              ? orderItems.map(item => `
-                  <div class="order-item">
-
-                    ${
-                      item.image_url
-                        ? `<img
-                             src="${escapeHTML(item.image_url)}"
-                             alt="${escapeHTML(item.product_name)}"
-                             width="60"
-                             onerror="this.style.display='none'"
-                           >`
-                        : ""
-                    }
-
-                    <span>
-                      ${escapeHTML(item.product_name)}
-                    </span>
-
-                    <span>
-                      Quantity: ${Number(item.quantity)}
-                    </span>
-
-                    <span>
-                      ${formatPrice(item.unit_price)}
-                    </span>
-
-                  </div>
-                `).join("")
-              : "<p>No items found for this order.</p>"
-          }
-        </div>
-
-        ${
-          status === "pending"
-            ? `<button
-                 type="button"
-                 onclick="cancelOrder('${escapeHTML(order.id)}')"
-               >
-                 Cancel Order
-               </button>`
-            : ""
-        }
-
+            <div>
+              <strong>${escapeHTML(item.product_name)}</strong>
+              <p>Quantity: ${Number(item.quantity)}</p>
+              <p>Price: ${formatPrice(item.unit_price)}</p>
+            </div>
+          </div>
+        `).join("")}
       </div>
-    `;
-  }).join("");
+
+      <p class="customer-order-total">
+        Total: ${formatPrice(order.total_amount)}
+      </p>
+
+      ${order.status === "pending" ? `
+        <button
+          type="button"
+          class="cancel-order-btn"
+          data-order-id="${escapeHTML(order.id)}"
+        >
+          Cancel Order
+        </button>
+      ` : ""}
+    </article>
+  `).join("");
 }
 
-/* =====================================================
-   18. CANCEL A PENDING ORDER
-===================================================== */
+if (myOrdersBtn) {
+  myOrdersBtn.addEventListener("click", async () => {
+    myOrdersSection?.classList.remove("hidden");
+    myOrdersSection?.scrollIntoView({ behavior: "smooth" });
 
-async function cancelOrder(orderId) {
-  if (!currentUser) {
-    showMessage("Please log in first.");
-    return;
-  }
+    myOrdersBtn.disabled = true;
 
-  const confirmed = confirm(
-    "Are you sure you want to cancel this order?"
-  );
+    if (myOrdersList) {
+      myOrdersList.innerHTML = "<p>Loading your orders...</p>";
+    }
 
-  if (!confirmed) return;
+    try {
+      await loadMyOrders();
+    } catch (error) {
+      console.error("Order history error:", error);
 
-  const { data, error } = await db
-    .from("orders")
-    .update({
-      status: "cancelled"
-    })
-    .eq("id", orderId)
-    .eq("user_id", currentUser.id)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    console.error("Order cancellation error:", error);
-    showMessage(error.message);
-    return;
-  }
-
-  if (!data) {
-    showMessage(
-      "This order could not be cancelled. It may no longer be pending."
-    );
-    await loadMyOrders();
-    return;
-  }
-
-  showMessage("Order cancelled successfully.");
-
-  await loadMyOrders();
-}
-/* =====================================================
-   19. START THE WEBSITE
-===================================================== */
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await loadProducts();
-
-  displayCart();
-
-  const yearElement = getElement("year");
-
-  if (yearElement) {
-    yearElement.textContent = new Date().getFullYear();
-  }
-
-  const searchInput =
-    getElement("searchInput") ||
-    getElement("searchBar") ||
-    getElement("search");
-
-  if (searchInput) {
-    searchInput.addEventListener("input", searchProducts);
-  }
-
-  /*
-    Check whether a customer is already logged in.
-  */
-
-  const { data, error } = await db.auth.getSession();
-
-  if (error) {
-    console.error("Session error:", error);
-  }
-
-  currentUser = data?.session?.user || null;
-
-  updateAccountStatus();
-
-  if (currentUser) {
-    await loadMyOrders();
-  }
-
-  /*
-    Update account information when login state changes.
-  */
-
-  db.auth.onAuthStateChange((_event, session) => {
-    currentUser = session?.user || null;
-
-    updateAccountStatus();
-
-    if (currentUser) {
-      loadMyOrders();
+      if (myOrdersList) {
+        myOrdersList.innerHTML = `
+          <p>Could not load your orders.</p>
+          <p class="error">
+            ${escapeHTML(error.message || "Please try again.")}
+          </p>
+        `;
+      }
+    } finally {
+      myOrdersBtn.disabled = false;
     }
   });
-});
+}
+
+/* 17. CANCEL A PENDING ORDER */
+
+if (myOrdersList) {
+  myOrdersList.addEventListener("click", async event => {
+    const button = event.target.closest(".cancel-order-btn");
+
+    if (!button || !db) return;
+
+    const orderId = button.dataset.orderId;
+
+    if (!orderId) return;
+
+    if (!confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Cancelling...";
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await db.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const user = sessionData.session?.user;
+
+      if (!user) {
+        throw new Error("Please log in first.");
+      }
+
+      // Only update this customer's pending order.
+      const { data, error } = await db
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", orderId)
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "This order could not be cancelled. It may already be processed, or database permissions may prevent the update."
+        );
+      }
+
+      showToast("Order cancelled successfully.");
+
+      // Reload the list so the cancelled order disappears.
+      await loadMyOrders();
+    } catch (error) {
+      console.error("Cancel order error:", error);
+
+      alert(error.message || "Could not cancel this order.");
+
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = "Cancel Order";
+      }
+    }
+  });
+}
+
+/* 18. INITIALIZE WEBSITE */
+
+displayProducts();
+updateCart();
+loadProducts();
+
+if (db) {
+  db.auth.getSession()
+    .then(({ data, error }) => {
+      if (error) {
+        console.error("Could not check session:", error);
+        return;
+      }
+
+      updateAccountStatus(data.session?.user || null);
+    })
+    .catch(error => {
+      console.error("Session initialization error:", error);
+    });
+
+  db.auth.onAuthStateChange((_event, session) => {
+    updateAccountStatus(session?.user || null);
+  });
+}
