@@ -75,6 +75,7 @@ function closeOverlay(id) {
 }
 
 
+
 /* 4. LOAD DATABASE PRODUCTS */
 
 async function loadProducts() {
@@ -95,7 +96,7 @@ async function loadProducts() {
 
     if (data && data.length) {
       products = data.map(row => ({
-        id: Number(row.id),
+        id: row.id,
         name: row.name,
         category: row.category === "Womens" ? "Women" : row.category,
         price: Number(row.price || 0),
@@ -119,7 +120,6 @@ async function loadProducts() {
 }
 
 
-/* 5. DISPLAY PRODUCTS */
 
 
 /* 5. DISPLAY PRODUCTS — MATCHES THE PRODUCT CSS */
