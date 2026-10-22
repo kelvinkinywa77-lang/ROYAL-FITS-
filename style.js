@@ -291,7 +291,7 @@ const product = products.find(p => String(p.id) === String(id));
   }
 
   const hasStock = product.stock !== undefined && product.stock !== null;
-  const existing = cart.find(item => Number(item.id) === Number(id));
+  const existing = cart.find(item => String(item.id) === String(id));
 
   if (hasStock && (existing?.quantity || 0) >= Number(product.stock)) {
     showToast("Sorry, there is not enough stock available.");
