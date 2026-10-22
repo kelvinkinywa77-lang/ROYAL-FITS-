@@ -59,13 +59,23 @@ function showToast(message) {
   }, 3500);
 }
 
+
 function openOverlay(id) {
-  document.getElementById(id)?.classList.remove("hidden");
+  // Close other open overlays first
+  document.querySelectorAll(".overlay").forEach(overlay => {
+    if (overlay.id !== id) {
+      overlay.classList.add("hidden");
+    }
+  });
+
+  // Open only the requested overlay
+  const overlay = document.getElementById(id);
+
+  if (overlay) {
+    overlay.classList.remove("hidden");
+  }
 }
 
-function closeOverlay(id) {
-  document.getElementById(id)?.classList.add("hidden");
-}
 
 function getCartTotal() {
   return Math.round(
