@@ -965,3 +965,101 @@ if (myOrdersList) {
     }
   });
 }
+
+/* 19. M-PESA STK PUSH */
+
+const mpesaPayBtn = document.getElementById("mpesaPayBtn");
+const mpesaPhoneInput = document.getElementById("mpesaPhone");
+const mpesaMessage = document.getElementById("mpesaMessage");
+
+if (mpesaPayBtn) {
+  mpesaPayBtn.addEventListener("click", async () => {
+    if (!db) {
+      mpesaMessage.textContent = "Database connection is unavailable.";
+      return;
+    }
+
+    if (!cart.length) {
+      mpesaMessage.textContent = "Your cart is empty.";
+      return;
+    }
+
+    const rawPhone = mpesaPhoneInput.value.trim();
+    const phone = rawPhone
+      .replace(/[\s()-]/g, "")
+      .replace(/^\+/, "")
+      .replace(/^0/, "254");
+
+    if (!/^254[17]\d{8}$/.test(phone)) {
+      mpesaMessage.textContent =
+        "Enter a valid Kenyan number, e.g. 0712345678.";
+      return;
+    }
+
+    const amount = Math.round(
+      cart.reduce(
+        (sum, item) =>
+          sum + Number(item.price || 0) * Number(item.quantity || 0),
+        0
+      )
+    );
+
+    if (!Number.isSafeInteger(amount) || amount < 1) {
+      mpesaMessage.textContent = "Your payment amount is invalid.";
+      return;
+    }
+
+    mpesaPayBtn.disabled = true;
+    mpesaMessage.textContent = "Requesting M-Pesa payment...";
+
+    try {
+      console.log("Starting M-Pesa STK Push", {
+        functionName: "mpesa-stk-push",
+        amount
+      });
+
+      const { data, error } = await db.functions.invoke(
+        "mpesa-stk-push",
+        {
+          body: { phone, amount }
+        }
+      );
+
+      console.log("STK Push response:", { data, error });
+
+      if (error) {
+        let detail = error.message;
+
+        if (error.context) {
+          try {
+            const responseBody = await error.context.json();
+            detail =
+              responseBody.error ||
+              responseBody.message ||
+              detail;
+          } catch (_) {}
+        }
+
+        throw new Error(detail);
+      }
+
+      if (!data || data.error) {
+        throw new Error(data?.error || "The payment request was rejected.");
+      }
+
+      mpesaMessage.textContent =
+        data.CustomerMessage ||
+        data.customerMessage ||
+        data.message ||
+        "Request submitted. Check your phone for the M-Pesa prompt.";
+
+    } catch (error) {
+      console.error("M-Pesa STK Push failed:", error);
+      mpesaMessage.textContent =
+        "Payment request failed: " +
+        (error.message || "Unknown error");
+    } finally {
+      mpesaPayBtn.disabled = false;
+    }
+  });
+}
