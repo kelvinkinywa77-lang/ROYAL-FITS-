@@ -725,16 +725,14 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
     return;
   }
 
-  const phone = phoneInput?.value.trim() || "";
-  const normalizedPhone = phone.replace(/[\s-]/g, "");
+ const phone = phoneInput?.value.trim() || "";
+const normalizedPhone = phone.replace(/[\s-]/g, "");
 
-  
 if (!/^(?:(?:\+?254|0)(?:7|1)\d{8})$/.test(normalizedPhone)) {
   setMessage("Enter a valid Kenyan M-Pesa number, e.g. 0712345678 or 0112345678.");
   phoneInput?.focus();
   return;
-}
-
+} 
   const amount = Number(
     cart.reduce(
       (sum, item) => sum + Number(item.price || 0) * item.quantity,
