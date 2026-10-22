@@ -1,7 +1,7 @@
 
 /* =====================================================
    ROYAL FITS BOUTIQUE254
-   Supabase, products, accounts, cart, orders and M-Pesa
+   Supabase products, customer authentication and cart
 ===================================================== */
 
 /* 1. SUPABASE CONNECTION */
@@ -12,23 +12,30 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_iUUvMivOvVBbk4XvCCDWtQ_iOWSra5g";
 
-const db = window.supabase
-  ? window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    )
-  : null;
+let db = null;
 
-/* 2. STATE */
+if (window.supabase) {
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+} else {
+  console.error("Supabase library did not load.");
+}
 
-const localProducts = [];
+
+/* 2. LOCAL PRODUCT FALLBACK */
+
+const localProducts = [
+   
+];
 
 let products = [...localProducts];
 let cart = [];
 let selectedCategory = "All";
 let searchTerm = "";
 let isRegistering = false;
-let checkoutBusy = false;
+
 
 /* 3. HELPERS */
 
@@ -56,61 +63,24 @@ function showToast(message) {
   clearTimeout(showToast.timer);
   showToast.timer = setTimeout(() => {
     toast.classList.add("hidden");
-  }, 3500);
+  }, 3000);
 }
-
 
 function openOverlay(id) {
-  // Close other open overlays first
-  document.querySelectorAll(".overlay").forEach(overlay => {
-    if (overlay.id !== id) {
-      overlay.classList.add("hidden");
-    }
-  });
+  document.getElementById(id)?.classList.remove("hidden");
+}
 
-  // Open only the requested overlay
-  const overlay = document.getElementById(id);
-
-  if (overlay) {
-    overlay.classList.remove("hidden");
-  }
+function closeOverlay(id) {
+  document.getElementById(id)?.classList.add("hidden");
 }
 
 
-function getCartTotal() {
-  return Math.round(
-    cart.reduce(
-      (sum, item) =>
-        sum + Number(item.price || 0) * Number(item.quantity || 0),
-      0
-    )
-  );
-}
-
-async function getCurrentUser() {
-  if (!db) throw new Error("Supabase is unavailable.");
-
-  const { data, error } = await db.auth.getSession();
-  if (error) throw error;
-
-  return data.session?.user || null;
-}
-
-function normalizeKenyanPhone(rawPhone) {
-  return String(rawPhone || "")
-    .trim()
-    .replace(/[\s()-]/g, "")
-    .replace(/^\+/, "")
-    .replace(/^0/, "254");
-}
-
-/* 4. LOAD PRODUCTS */
+/* 4. LOAD DATABASE PRODUCTS */
 
 async function loadProducts() {
   if (!db) {
     displayProducts();
     updateCart();
-    showToast("Database connection unavailable.");
     return;
   }
 
@@ -123,30 +93,36 @@ async function loadProducts() {
 
     if (error) throw error;
 
-    products = (data || []).map(row => ({
-      id: row.id,
-      name: row.name,
-      category: row.category === "Womens" ? "Women" : row.category,
-      price: Number(row.price || 0),
-      old: Number(row.old_price || 0),
-      image: row.image_url || "",
-      color: row.color || "#eeeeee",
-      rating: Number(row.rating || 4.5),
-      stock: row.stock == null ? null : Number(row.stock)
-    }));
-
-    displayProducts();
-    updateCart();
+    if (data && data.length) {
+      products = data.map(row => ({
+        id: Number(row.id),
+        name: row.name,
+        category: row.category === "Womens" ? "Women" : row.category,
+        price: Number(row.price || 0),
+        old: Number(row.old_price || 0),
+        image: row.image_url || "",
+        color: row.color || "#eeeeee",
+        rating: Number(row.rating || 4.5),
+        stock: row.stock == null ? null : Number(row.stock)
+      }));
+    } else {
+      products = [...localProducts];
+    }
   } catch (error) {
-    console.error("Product loading error:", error);
+    console.error("Could not load Supabase products:", error);
     products = [...localProducts];
-    displayProducts();
-    updateCart();
-    showToast("Could not load products from the database.");
+    showToast("Using local products because the database could not load.");
   }
+
+  displayProducts();
+  updateCart();
 }
 
+
 /* 5. DISPLAY PRODUCTS */
+
+
+/* 5. DISPLAY PRODUCTS — MATCHES THE PRODUCT CSS */
 
 function displayProducts() {
   const grid = document.getElementById("productGrid");
@@ -155,13 +131,15 @@ function displayProducts() {
   if (!grid) return;
 
   const filtered = products.filter(product => {
+    const category = String(product.category || "").toLowerCase();
+    const selected = String(selectedCategory || "All").toLowerCase();
+
     const categoryMatches =
-      selectedCategory === "All" ||
-      product.category === selectedCategory;
+      selected === "all" || category === selected;
 
     const searchMatches =
-      String(product.name).toLowerCase().includes(searchTerm) ||
-      String(product.category).toLowerCase().includes(searchTerm);
+      String(product.name || "").toLowerCase().includes(searchTerm) ||
+      category.includes(searchTerm);
 
     return categoryMatches && searchMatches;
   });
@@ -173,42 +151,66 @@ function displayProducts() {
 
   if (!filtered.length) {
     grid.innerHTML =
-      '<p class="empty-message">No products found.</p>';
+      '<p class="empty-message">No products found. Check back soon.</p>';
     return;
   }
 
   grid.innerHTML = filtered.map(product => {
     const price = Number(product.price || 0);
     const oldPrice = Number(product.old || 0);
-    const hasStock = product.stock !== null;
-    const soldOut = hasStock && product.stock <= 0;
-    const discount = oldPrice > price && oldPrice > 0
-      ? Math.round((1 - price / oldPrice) * 100)
-      : 0;
+    const stockKnown = product.stock !== null &&
+                       product.stock !== undefined;
+    const stock = stockKnown ? Number(product.stock) : null;
+    const soldOut = stockKnown && stock <= 0;
+
+    const discount =
+      oldPrice > price && oldPrice > 0
+        ? Math.round((oldPrice - price) / oldPrice * 100)
+        : 0;
+
+    const image = String(product.image || "").trim();
 
     return `
       <article class="product-card">
+
         <div class="product-image-wrap"
-             style="background:${escapeHTML(product.color)}">
-          <img
-            src="${escapeHTML(product.image)}"
-            alt="${escapeHTML(product.name)}"
-            class="product-image"
-            loading="lazy"
-            onclick="showImage(this.src, this.alt)"
-            onerror="this.style.opacity='0.4'"
-          >
-          ${discount > 0
-            ? `<span class="discount-badge">${discount}% OFF</span>`
-            : ""}
+             style="background:${escapeHTML(product.color || "#eeeeee")}">
+
+          ${
+            image
+              ? `<img
+                   src="${escapeHTML(image)}"
+                   alt="${escapeHTML(product.name)}"
+                   class="product-image"
+                   loading="lazy"
+                   onclick="showImage(this.src, this.alt)"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                 >`
+              : ""
+          }
+
+          <div class="image-placeholder"
+               style="display:${image ? "none" : "flex"}">
+            Image unavailable
+          </div>
+
+          ${
+            discount > 0
+              ? `<span class="discount-badge">${discount}% OFF</span>`
+              : ""
+          }
+
         </div>
 
         <div class="product-info">
+
           <p class="product-category">
-            ${escapeHTML(product.category)}
+            ${escapeHTML(product.category || "Fashion")}
           </p>
 
-          <h3>${escapeHTML(product.name)}</h3>
+          <h3 class="product-name">
+            ${escapeHTML(product.name || "Unnamed product")}
+          </h3>
 
           <p class="product-rating">
             ⭐ ${Number(product.rating || 4.5)} / 5
@@ -216,29 +218,40 @@ function displayProducts() {
 
           <div class="product-prices">
             <strong>${formatPrice(price)}</strong>
-            ${oldPrice > price ? `<del>${formatPrice(oldPrice)}</del>` : ""}
+            ${
+              oldPrice > price
+                ? `<del>${formatPrice(oldPrice)}</del>`
+                : ""
+            }
           </div>
 
           <p class="stock-label">
-            ${!hasStock
-              ? "Stock not synced"
-              : product.stock > 0
-                ? `${product.stock} in stock`
-                : "Out of stock"}
+            ${
+              !stockKnown
+                ? "Stock not synced"
+                : soldOut
+                  ? "Out of stock"
+                  : `${stock} in stock`
+            }
           </p>
 
           <button
-            class="primary-btn full-width"
-            onclick="addToCart('${String(product.id).replace(/'/g, "\\'")}')"
+            type="button"
+            class="primary-btn full-width add-to-cart-btn"
+            onclick="addToCart(${Number(product.id)})"
             ${soldOut ? "disabled" : ""}
           >
             ${soldOut ? "OUT OF STOCK" : "ADD TO CART 🛍"}
           </button>
+
         </div>
+
       </article>
     `;
   }).join("");
 }
+
+
 
 /* 6. PRODUCT IMAGE POPUP */
 
@@ -266,24 +279,22 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape") closeImage();
 });
 
-/* 7. CART */
+
+/* 7. SHOPPING CART */
 
 function addToCart(id) {
-  const product = products.find(p => String(p.id) === String(id));
+  const product = products.find(p => Number(p.id) === Number(id));
 
   if (!product) {
     showToast("Product not found.");
     return;
   }
 
-  const existing = cart.find(item => String(item.id) === String(id));
-  const quantityInCart = existing?.quantity || 0;
+  const hasStock = product.stock !== undefined && product.stock !== null;
+  const existing = cart.find(item => Number(item.id) === Number(id));
 
-  if (
-    product.stock !== null &&
-    quantityInCart >= Number(product.stock)
-  ) {
-    showToast("Not enough stock available.");
+  if (hasStock && (existing?.quantity || 0) >= Number(product.stock)) {
+    showToast("Sorry, there is not enough stock available.");
     return;
   }
 
@@ -294,11 +305,11 @@ function addToCart(id) {
   }
 
   updateCart();
-  showToast("Product added to your cart.");
+  showToast("Product added to your cart!");
 }
 
 function removeFromCart(id) {
-  cart = cart.filter(item => String(item.id) !== String(id));
+  cart = cart.filter(item => Number(item.id) !== Number(id));
   updateCart();
 }
 
@@ -308,9 +319,12 @@ function updateCart() {
   const totalElement = document.getElementById("cartTotal");
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + Number(item.price || 0) * item.quantity, 0
+  );
 
   if (count) count.textContent = totalItems;
-  if (totalElement) totalElement.textContent = formatPrice(getCartTotal());
+  if (totalElement) totalElement.textContent = formatPrice(total);
   if (!itemsElement) return;
 
   if (!cart.length) {
@@ -320,24 +334,15 @@ function updateCart() {
 
   itemsElement.innerHTML = cart.map(item => `
     <div class="cart-item">
-      <img
-        class="cart-image"
-        src="${escapeHTML(item.image)}"
-        alt="${escapeHTML(item.name)}"
-        onerror="this.style.visibility='hidden'"
-      >
-
+      <img class="cart-image"
+           src="${escapeHTML(item.image || "")}"
+           alt="${escapeHTML(item.name)}">
       <div class="cart-item-details">
         <h4>${escapeHTML(item.name)}</h4>
-        <p>Price: ${formatPrice(item.price)}</p>
+        <p>${formatPrice(item.price)}</p>
         <p>Quantity: ${item.quantity}</p>
         <p>Subtotal: ${formatPrice(item.price * item.quantity)}</p>
-
-        <button
-          class="text-btn"
-          type="button"
-          onclick="removeFromCart('${String(item.id).replace(/'/g, "\\'")}')"
-        >
+        <button class="text-btn" onclick="removeFromCart(${Number(item.id)})">
           Remove
         </button>
       </div>
@@ -345,11 +350,12 @@ function updateCart() {
   `).join("");
 }
 
+
 /* 8. CATEGORY FILTERS */
 
-document.querySelectorAll(".category[data-category]").forEach(button => {
+document.querySelectorAll(".category").forEach(button => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".category[data-category]").forEach(item => {
+    document.querySelectorAll(".category").forEach(item => {
       item.classList.remove("active");
     });
 
@@ -359,21 +365,30 @@ document.querySelectorAll(".category[data-category]").forEach(button => {
   });
 });
 
+
 /* 9. SEARCH */
 
-document.getElementById("searchForm")?.addEventListener("submit", event => {
-  event.preventDefault();
-  searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
-  displayProducts();
-  document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
-});
+const searchForm = document.getElementById("searchForm");
+const searchInput = document.getElementById("searchInput");
 
-document.getElementById("searchInput")?.addEventListener("input", event => {
-  searchTerm = event.target.value.trim().toLowerCase();
-  displayProducts();
-});
+if (searchForm) {
+  searchForm.addEventListener("submit", event => {
+    event.preventDefault();
+    searchTerm = searchInput.value.trim().toLowerCase();
+    displayProducts();
+    document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+  });
+}
 
-/* 10. NAVIGATION AND OVERLAYS */
+if (searchInput) {
+  searchInput.addEventListener("input", event => {
+    searchTerm = event.target.value.trim().toLowerCase();
+    displayProducts();
+  });
+}
+
+
+/* 10. NAVIGATION BUTTONS */
 
 document.getElementById("shopBtn")?.addEventListener("click", () => {
   document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
@@ -394,38 +409,66 @@ document.querySelectorAll(".overlay").forEach(overlay => {
   });
 });
 
-/* 11. LOGIN AND REGISTRATION */
+
+/* 11. LOGIN AND REGISTRATION FORM CONTROLS */
 
 function setAccountMode(registering) {
   isRegistering = registering;
 
-  document.getElementById("accountTitle").textContent =
-    registering ? "Create Your Account" : "Customer Login";
+  const title = document.getElementById("accountTitle");
+  const submit = document.getElementById("accountSubmit");
+  const fields = document.getElementById("registerFields");
+  const prompt = document.getElementById("switchPrompt");
+  const switchButton = document.getElementById("switchAccount");
+  const hint = document.getElementById("passwordHint");
+  const password = document.getElementById("password");
+  const fullName = document.getElementById("fullName");
+  const phone = document.getElementById("phone");
+  const error = document.getElementById("formError");
 
-  document.getElementById("accountSubmit").textContent =
-    registering ? "REGISTER" : "LOGIN";
+  if (title) {
+    title.textContent = registering
+      ? "Create Your Account"
+      : "Customer Login";
+  }
 
-  document.getElementById("registerFields").classList.toggle(
-    "hidden", !registering
-  );
+  if (submit) {
+    submit.textContent = registering ? "CREATE ACCOUNT" : "LOGIN";
+  }
 
-  document.getElementById("switchPrompt").textContent =
-    registering ? "Already have an account?" : "New customer?";
+  if (fields) {
+    fields.classList.toggle("hidden", !registering);
+  }
 
-  document.getElementById("switchAccount").textContent =
-    registering ? "Login here" : "Register here";
+  if (prompt) {
+    prompt.textContent = registering
+      ? "Already have an account?"
+      : "New customer?";
+  }
 
-  document.getElementById("passwordHint").textContent =
-    registering
-      ? "Choose a password with at least 12 characters."
-      : "Use your registered email and password.";
+  if (switchButton) {
+    switchButton.textContent = registering
+      ? "Login here"
+      : "Register here";
+  }
 
-  document.getElementById("password").autocomplete =
-    registering ? "new-password" : "current-password";
+  if (hint) {
+    hint.textContent = registering
+      ? "Create a strong password of at least 6 characters."
+      : "Enter your registered email and password.";
+  }
 
-  document.getElementById("fullName").required = registering;
-  document.getElementById("phone").required = registering;
-  document.getElementById("formError").textContent = "";
+  if (password) {
+    password.autocomplete = registering
+      ? "new-password"
+      : "current-password";
+    password.minLength = 6;
+  }
+
+  if (fullName) fullName.required = registering;
+  if (phone) phone.required = registering;
+
+  if (error) error.textContent = "";
 }
 
 document.getElementById("accountBtn")?.addEventListener("click", () => {
@@ -447,74 +490,152 @@ document.getElementById("switchAccount")?.addEventListener("click", () => {
   setAccountMode(!isRegistering);
 });
 
-document.getElementById("accountForm")?.addEventListener("submit", async event => {
-  event.preventDefault();
 
-  const errorElement = document.getElementById("formError");
-  const submitButton = document.getElementById("accountSubmit");
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const fullName = document.getElementById("fullName").value.trim();
-  const phone = document.getElementById("phone").value.trim();
 
-  errorElement.textContent = "";
+/* 12. SUPABASE REGISTRATION AND LOGIN */
 
-  if (!db) {
-    errorElement.textContent = "Supabase did not load. Refresh the page.";
-    return;
-  }
+/* 12. SUPABASE REGISTRATION AND LOGIN */
 
-  if (isRegistering && password.length < 12) {
-    errorElement.textContent = "Use a password of at least 12 characters.";
-    return;
-  }
+const accountForm = document.getElementById("accountForm");
 
-  submitButton.disabled = true;
-  submitButton.textContent = "PLEASE WAIT...";
+if (accountForm) {
+  accountForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  try {
-    if (isRegistering) {
-      const { data, error } = await db.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName, phone }
+    const errorElement = document.getElementById("formError");
+    const statusElement = document.getElementById("accountStatus");
+    const submitButton = document.getElementById("accountSubmit");
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const fullName = document.getElementById("fullName").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if (errorElement) errorElement.textContent = "";
+    if (statusElement) statusElement.textContent = "";
+
+    if (!db) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Connection unavailable. Refresh the page and try again.";
+      }
+      return;
+    }
+
+    if (!email || !password) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Please enter your email and password.";
+      }
+      return;
+    }
+
+    if (isRegistering && (!fullName || !phone)) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Please enter your full name and phone number.";
+      }
+      return;
+    }
+
+    if (password.length < 6) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Your password must contain at least 6 characters.";
+      }
+      return;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "PLEASE WAIT...";
+    }
+
+    try {
+      if (isRegistering) {
+        const { data, error } = await db.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              full_name: fullName,
+              phone: phone
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.session) {
+          if (statusElement) {
+            statusElement.textContent =
+              "Your account has been created successfully.";
+          }
+
+          closeOverlay("accountOverlay");
+          await updateAccountStatus(data.user);
+          showToast("Account created successfully!");
+        } else {
+          if (statusElement) {
+            statusElement.textContent =
+              "Registration received. Check your email for the confirmation link, then log in.";
+          }
+
+          showToast("Check your email to confirm your account.");
+          setAccountMode(false);
         }
-      });
 
-      if (error) throw error;
+      } else {
+        const { data, error } = await db.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
 
-      if (data.session) {
-        showToast("Registration successful.");
+        if (error) throw error;
+
         closeOverlay("accountOverlay");
         await updateAccountStatus(data.user);
-      } else {
-        errorElement.textContent =
-          "Account created. Check your email for a confirmation link.";
+        showToast("Login successful!");
       }
-    } else {
-      const { data, error } = await db.auth.signInWithPassword({
-        email,
-        password
-      });
 
-      if (error) throw error;
+    } catch (error) {
+      console.error("Account error:", error);
 
-      showToast("Login successful.");
-      closeOverlay("accountOverlay");
-      await updateAccountStatus(data.user);
+      let friendlyMessage = error.message || "Something went wrong.";
+
+      if (friendlyMessage.toLowerCase().includes("invalid login")) {
+        friendlyMessage =
+          "Incorrect email or password. Check your details or register first.";
+      } else if (friendlyMessage.toLowerCase().includes("already registered")) {
+        friendlyMessage =
+          "This email already has an account. Please log in instead.";
+      } else if (friendlyMessage.toLowerCase().includes("password")) {
+        friendlyMessage =
+          "Check your password. It may be too short or not meet the required rules.";
+      }
+
+      if (errorElement) {
+        errorElement.textContent = friendlyMessage;
+      } else {
+        showToast(friendlyMessage);
+      }
+
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = isRegistering
+          ? "CREATE ACCOUNT"
+          : "LOGIN";
+      }
     }
-  } catch (error) {
-    console.error("Authentication error:", error);
-    errorElement.textContent = error.message || "Authentication failed.";
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = isRegistering ? "REGISTER" : "LOGIN";
-  }
-});
+  });
+}
 
-/* 12. ACCOUNT STATUS, LOGOUT AND PASSWORD RESET */
+/* 13. ACCOUNT STATUS AND LOGOUT */
+
+
+/* 13. ACCOUNT STATUS AND LOGOUT */
 
 async function updateAccountStatus(user) {
   const status = document.getElementById("accountStatus");
@@ -522,11 +643,13 @@ async function updateAccountStatus(user) {
 
   if (status) {
     status.textContent = user
-      ? `Signed in as ${user.email}`
-      : "You are not signed in.";
+      ? `Logged in as ${user.email}`
+      : "You are not logged in.";
   }
 
-  logoutButton?.classList.toggle("hidden", !user);
+  if (logoutButton) {
+    logoutButton.classList.toggle("hidden", !user);
+  }
 }
 
 document.getElementById("logoutBtn")?.addEventListener("click", async () => {
@@ -535,42 +658,65 @@ document.getElementById("logoutBtn")?.addEventListener("click", async () => {
   const { error } = await db.auth.signOut();
 
   if (error) {
+    console.error("Logout error:", error);
     showToast("Could not log out. Please try again.");
-    console.error(error);
     return;
   }
 
   await updateAccountStatus(null);
+  closeOverlay("accountOverlay");
   showToast("You have logged out.");
 });
 
-document.getElementById("resetPasswordBtn")?.addEventListener("click", async () => {
-  if (!db) return;
+document.getElementById("resetPasswordBtn")?.addEventListener(
+  "click",
+  async () => {
+    if (!db) return;
 
-  const email = document.getElementById("email").value.trim();
-  const errorElement = document.getElementById("formError");
+    const email = document.getElementById("email")?.value.trim();
+    const errorElement = document.getElementById("formError");
 
-  if (!email) {
-    errorElement.textContent = "Enter your email address first.";
-    return;
+    if (!email) {
+      if (errorElement) {
+        errorElement.textContent =
+          "Enter your email address before requesting a password reset.";
+      }
+      return;
+    }
+
+    const redirectTo =
+      window.location.origin + window.location.pathname;
+
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo
+    });
+
+    if (error) {
+      if (errorElement) errorElement.textContent = error.message;
+    } else {
+      showToast("If the email is registered, a password reset email will be sent.");
+    }
   }
+);
 
-  const { error } = await db.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + window.location.pathname
-  });
 
-  errorElement.textContent = error
-    ? error.message
-    : "If the email is registered, a password reset link will be sent.";
-});
+/* 14. CHECKOUT — CREATE ORDER AND REQUEST M-PESA */
 
-/* 13. CHECKOUT: CREATE ORDER, SAVE ITEMS, REQUEST M-PESA */
+let checkoutBusy = false;
 
 document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
   if (checkoutBusy) return;
 
+  const button = document.getElementById("checkoutBtn");
+  const phoneInput = document.getElementById("mpesa-phone");
+  const message = document.getElementById("mpesa-message");
+
+  const setMessage = text => {
+    if (message) message.textContent = text;
+  };
+
   if (!db) {
-    showToast("Database connection failed.");
+    showToast("Database connection is unavailable.");
     return;
   }
 
@@ -579,53 +725,60 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
     return;
   }
 
-  const user = await getCurrentUser().catch(error => {
-    console.error(error);
-    return null;
-  });
+  const phone = phoneInput?.value.trim() || "";
+  const normalizedPhone = phone.replace(/[\s-]/g, "");
 
-  if (!user) {
-    closeOverlay("cartOverlay");
-    setAccountMode(false);
-    openOverlay("accountOverlay");
-    showToast("Please log in before placing your order.");
+  if (!/^(?:\+?254|0)7\d{8}$/.test(normalizedPhone)) {
+    setMessage("Enter a valid Kenyan M-Pesa number, for example 0712345678.");
+    phoneInput?.focus();
     return;
   }
 
-  const phoneInput = document.getElementById("mpesa-phone");
-  const message = document.getElementById("mpesa-message");
-  const checkoutButton = document.getElementById("checkoutBtn");
+  const amount = Number(
+    cart.reduce(
+      (sum, item) => sum + Number(item.price || 0) * item.quantity,
+      0
+    ).toFixed(2)
+  );
 
-  const phone = normalizeKenyanPhone(phoneInput?.value);
-  const amount = getCartTotal();
-
-  if (!/^254[17]\d{8}$/.test(phone)) {
-    if (message) {
-      message.textContent =
-        "Enter a valid Kenyan M-Pesa number, e.g. 0712345678.";
-    } else {
-      showToast("Enter a valid M-Pesa phone number.");
-    }
-    return;
-  }
-
-  if (!Number.isSafeInteger(amount) || amount < 1) {
-    showToast("The order total is invalid.");
+  if (amount <= 0) {
+    setMessage("Your order total must be greater than zero.");
     return;
   }
 
   checkoutBusy = true;
-  checkoutButton.disabled = true;
-  checkoutButton.textContent = "PROCESSING...";
 
-  if (message) message.textContent = "Saving your order...";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "PROCESSING...";
+  }
+
+  setMessage("Creating your order. Please wait.");
 
   let orderId = null;
 
-  // Snapshot the cart so changes during checkout cannot alter this order.
-  const snapshot = cart.map(item => ({ ...item }));
-
   try {
+    const { data: sessionData, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      closeOverlay("cartOverlay");
+      setAccountMode(false);
+      openOverlay("accountOverlay");
+      setMessage("Please log in before placing your order.");
+      return;
+    }
+
+    /*
+      The order total is calculated from the cart here.
+      The Edge Function must independently verify the order
+      and amount before initiating the M-Pesa request.
+    */
+
     const { data: order, error: orderError } = await db
       .from("orders")
       .insert({
@@ -640,10 +793,10 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
 
     orderId = order.id;
 
-    const orderItems = snapshot.map(item => ({
+    const orderItems = cart.map(item => ({
       order_id: orderId,
       product_name: item.name,
-      quantity: Number(item.quantity),
+      quantity: item.quantity,
       unit_price: Number(item.price),
       image_url: item.image || null
     }));
@@ -652,311 +805,82 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
       .from("order_items")
       .insert(orderItems);
 
-    if (itemsError) {
-      throw new Error(
-        "The order was created, but its items could not be saved. Order ID: " +
-        orderId + ". " + itemsError.message
-      );
-    }
+    if (itemsError) throw itemsError;
 
-    if (message) {
-      message.textContent = "Requesting M-Pesa payment...";
-    }
+    setMessage("Order created. Requesting M-Pesa payment...");
 
-    // The Edge Function must validate this order and associate its
-    // CheckoutRequestID with orderId for the trusted callback.
-    const { data, error } = await db.functions.invoke(
-      "initiate-stk-push",
-      {
+    const formattedPhone = normalizedPhone.startsWith("+")
+      ? normalizedPhone.slice(1)
+      : normalizedPhone.startsWith("254")
+        ? normalizedPhone
+        : "254" + normalizedPhone.slice(1);
+
+    const { data: paymentData, error: paymentError } =
+      await db.functions.invoke("initiate-stk-push", {
         body: {
-          phone,
+          phone: formattedPhone,
           amount,
           order_id: orderId
         }
-      }
-    );
+      });
 
-    if (error) {
-      let detail = error.message || "Could not initiate payment.";
+    if (paymentError) throw paymentError;
 
-      if (error.context) {
-        try {
-          const response = await error.context.json();
-          detail = response.error || response.message || detail;
-        } catch (_) {}
-      }
-
-      throw new Error(detail);
+    if (paymentData?.error) {
+      throw new Error(paymentData.error);
     }
 
-    if (!data || data.error) {
-      throw new Error(data?.error || "The payment request was rejected.");
-    }
+    /*
+      An accepted STK request is NOT proof of payment.
+      Keep the order pending until the verified Safaricom
+      callback updates its payment status.
+    */
 
-    // A successful STK request is not proof of payment.
-    if (message) {
-      message.textContent =
-        data.CustomerMessage ||
-        data.customerMessage ||
-        "Payment request sent. Enter your M-Pesa PIN on your phone. " +
-        "Your order will remain pending until payment is confirmed.";
-    }
-
-    // Only clear the cart after the order and payment request were accepted.
     cart = [];
     updateCart();
-    closeOverlay("cartOverlay");
 
-    showToast(
-      "Order #" + orderId +
-      " saved. Waiting for M-Pesa payment confirmation."
+    setMessage(
+      "Payment request sent. Check your phone and enter your M-Pesa PIN if prompted. Your order remains pending until payment is confirmed."
     );
 
-    console.log("Order and STK request submitted:", {
-      orderId,
-      response: data
-    });
+    showToast("Order created. Check your phone for the M-Pesa prompt.");
+
   } catch (error) {
-    console.error("Checkout/payment error:", error);
+    console.error("Checkout error:", error);
 
-    if (message) {
-      message.textContent =
-        "Could not complete checkout: " +
-        (error.message || "Please try again.");
-    } else {
-      showToast(error.message || "Checkout failed.");
-    }
+    setMessage(
+      error.message ||
+      "Checkout failed. Check your connection and try again."
+    );
 
-    // Do not mark the order as paid here.
-    // Do not automatically delete an order that may already have a payment request.
+    showToast("Checkout could not be completed. Check the message in your cart.");
+
+    /*
+      Do not automatically delete an order here:
+      the payment request may have reached the provider even
+      if the browser did not receive the response.
+    */
+
   } finally {
     checkoutBusy = false;
-    checkoutButton.disabled = false;
-    checkoutButton.textContent = "LOGIN TO PLACE ORDER";
-  }
-});
 
-/* 14. MY ORDERS */
-
-const myOrdersBtn = document.getElementById("myOrdersBtn");
-const myOrdersSection = document.getElementById("myOrdersSection");
-const myOrdersList = document.getElementById("myOrdersList");
-const shopContent = document.getElementById("shopContent");
-
-async function loadMyOrders() {
-  if (!db) throw new Error("Supabase database connection failed.");
-
-  myOrdersList.innerHTML = "<p>Loading your orders...</p>";
-
-  const user = await getCurrentUser();
-
-  if (!user) {
-    myOrdersList.innerHTML = "<p>Please log in to view your orders.</p>";
-    setAccountMode(false);
-    openOverlay("accountOverlay");
-    return;
-  }
-
-  const { data: orders, error: ordersError } = await db
-    .from("orders")
-    .select("id, user_id, total_amount, status, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (ordersError) throw ordersError;
-
-  const activeOrders = (orders || []).filter(
-    order => order.status !== "cancelled"
-  );
-
-  if (!activeOrders.length) {
-    myOrdersList.innerHTML = "<p>You have no active orders yet.</p>";
-    return;
-  }
-
-  const orderIds = activeOrders.map(order => order.id);
-
-  const { data: items, error: itemsError } = await db
-    .from("order_items")
-    .select("order_id, product_name, quantity, unit_price, image_url")
-    .in("order_id", orderIds);
-
-  if (itemsError) throw itemsError;
-
-  const { data: payments, error: paymentsError } = await db
-    .from("payment_attempts")
-    .select("order_id, status, receipt_number")
-    .in("order_id", orderIds);
-
-  // Payment history is optional for display; the orders and items remain visible
-  // if this table does not expose these columns or the query is denied.
-  if (paymentsError) {
-    console.warn("Payment history could not be loaded:", paymentsError.message);
-  }
-
-  const itemsByOrder = {};
-  (items || []).forEach(item => {
-    const key = String(item.order_id);
-    if (!itemsByOrder[key]) itemsByOrder[key] = [];
-    itemsByOrder[key].push(item);
-  });
-
-  const paymentsByOrder = {};
-  (payments || []).forEach(payment => {
-    paymentsByOrder[String(payment.order_id)] = payment;
-  });
-
-  myOrdersList.innerHTML = activeOrders.map(order => {
-    const orderItems = itemsByOrder[String(order.id)] || [];
-    const payment = paymentsByOrder[String(order.id)];
-    const status = order.status || "pending";
-
-    return `
-      <article class="customer-order">
-        <h3>Order #${escapeHTML(order.id)}</h3>
-
-        <p><strong>Date:</strong>
-          ${escapeHTML(order.created_at
-            ? new Date(order.created_at).toLocaleString()
-            : "Unavailable")}
-        </p>
-
-        <p><strong>Order status:</strong> ${escapeHTML(status)}</p>
-
-        <p><strong>Payment status:</strong>
-          ${escapeHTML(payment?.status || "Awaiting confirmation")}
-        </p>
-
-        ${payment?.receipt_number
-          ? `<p><strong>M-Pesa receipt:</strong>
-               ${escapeHTML(payment.receipt_number)}</p>`
-          : ""}
-
-        <div class="customer-order-items">
-          ${orderItems.length
-            ? orderItems.map(item => `
-              <div class="customer-order-item">
-                ${item.image_url
-                  ? `<img
-                       src="${escapeHTML(item.image_url)}"
-                       alt="${escapeHTML(item.product_name)}"
-                       loading="lazy"
-                       onerror="this.style.display='none'">`
-                  : ""}
-
-                <div>
-                  <strong>${escapeHTML(item.product_name)}</strong>
-                  <p>Quantity: ${Number(item.quantity)}</p>
-                  <p>Price: ${formatPrice(item.unit_price)}</p>
-                  <p>Subtotal: ${formatPrice(
-                    Number(item.unit_price) * Number(item.quantity)
-                  )}</p>
-                </div>
-              </div>
-            `).join("")
-            : "<p>No items found for this order.</p>"}
-        </div>
-
-        <p class="customer-order-total">
-          <strong>Total: ${formatPrice(order.total_amount)}</strong>
-        </p>
-
-        ${status === "pending"
-          ? `<button
-               type="button"
-               class="cancel-order-btn"
-               data-order-id="${escapeHTML(order.id)}">
-               Cancel Order
-             </button>`
-          : ""}
-      </article>
-    `;
-  }).join("");
-}
-
-myOrdersBtn?.addEventListener("click", async () => {
-  myOrdersSection?.classList.remove("hidden");
-  shopContent?.classList.add("hidden");
-
-  myOrdersSection?.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  myOrdersBtn.disabled = true;
-
-  try {
-    await loadMyOrders();
-  } catch (error) {
-    console.error("My Orders error:", error);
-    myOrdersList.innerHTML = `
-      <p>Could not load your orders.</p>
-      <p class="error">${escapeHTML(error.message)}</p>
-    `;
-  } finally {
-    myOrdersBtn.disabled = false;
-  }
-});
-
-document.getElementById("backToShopBtn")?.addEventListener("click", () => {
-  myOrdersSection?.classList.add("hidden");
-  shopContent?.classList.remove("hidden");
-  document.getElementById("categories")?.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-});
-
-/* 15. CANCEL PENDING ORDER */
-
-myOrdersList?.addEventListener("click", async event => {
-  const button = event.target.closest(".cancel-order-btn");
-  if (!button || !db) return;
-
-  const orderId = button.dataset.orderId;
-  if (!orderId) return;
-
-  if (!confirm("Are you sure you want to cancel this order?")) return;
-
-  button.disabled = true;
-  button.textContent = "Cancelling...";
-
-  try {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Please log in first.");
-
-    const { data, error } = await db
-      .from("orders")
-      .update({ status: "cancelled" })
-      .eq("id", orderId)
-      .eq("user_id", user.id)
-      .eq("status", "pending")
-      .select("id")
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) {
-      throw new Error(
-        "Order could not be cancelled. It may already be processed."
-      );
-    }
-
-    showToast("Order cancelled.");
-    await loadMyOrders();
-  } catch (error) {
-    console.error("Cancellation error:", error);
-    alert(error.message || "Could not cancel this order.");
-
-    if (button.isConnected) {
+    if (button) {
       button.disabled = false;
-      button.textContent = "Cancel Order";
+      button.textContent = "PLACE ORDER & PAY WITH M-PESA";
     }
   }
 });
 
-/* 16. FOOTER YEAR */
+/* 15. FOOTER YEAR */
 
 const yearElement = document.getElementById("year");
-if (yearElement) yearElement.textContent = new Date().getFullYear();
 
-/* 17. START WEBSITE */
+if (yearElement) {
+  yearElement.textContent = new Date().getFullYear();
+}
+
+
+/* 16. START WEBSITE */
 
 displayProducts();
 updateCart();
@@ -975,7 +899,4 @@ if (db) {
   db.auth.onAuthStateChange((_event, session) => {
     updateAccountStatus(session?.user || null);
   });
-} else {
-  console.error("Supabase library did not load.");
 }
-
