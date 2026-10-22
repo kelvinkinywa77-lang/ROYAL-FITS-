@@ -309,7 +309,7 @@ const product = products.find(p => String(p.id) === String(id));
 }
 
 function removeFromCart(id) {
-  cart = cart.filter(item => Number(item.id) !== Number(id));
+const existing = cart.find(item => String(item.id) === String(id));  
   updateCart();
 }
 
