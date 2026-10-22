@@ -1053,13 +1053,26 @@ if (mpesaPayBtn) {
         data.message ||
         "Request submitted. Check your phone for the M-Pesa prompt.";
 
-    } catch (error) {
-      console.error("initiate-stk-push failed:", error);
-      mpesaMessage.textContent =
-        "Payment request failed: " +
-        (error.message || "Unknown error");
-    } finally {
-      mpesaPayBtn.disabled = false;
+    
+} catch (error) {
+  console.error("M-Pesa STK Push failed:", error);
+
+  let details = error.message || "Unknown error";
+
+  if (error.context) {
+    try {
+      const response = await error.context.clone().json();
+      console.error("Function response:", response);
+      details = response.error || response.message || details;
+    } catch (_) {
+      try {
+        details = await error.context.clone().text();
+      } catch (_) {}
     }
+  }
+
+  mpesaMessage.textContent = "Payment failed: " + details;
+}
+
   });
 }
