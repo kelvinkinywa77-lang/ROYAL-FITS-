@@ -794,10 +794,11 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
     orderId = order.id;
 
     
-const orderItems = cart.map(item => {
-  const productId = item.product_id ?? item.id;
 
-  if (productId == null) {
+const orderItems = cart.map(item => {
+  const productId = item.id;
+
+  if (productId === undefined || productId === null) {
     throw new Error(
       `Missing product ID for ${item.name || "cart item"}`
     );
@@ -812,6 +813,9 @@ const orderItems = cart.map(item => {
     image_url: item.image || null
   };
 });
+
+console.log("Order items to save:", orderItems);
+
 
 
     const { error: itemsError } = await db
