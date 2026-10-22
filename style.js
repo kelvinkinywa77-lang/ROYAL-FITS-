@@ -797,14 +797,33 @@ if (orderError) {
 const { error: itemsError } = await db
   .from("order_items")
   .insert(
-    cart.map((item) => ({
-      order_id: order.id,
-      product_id: item.product_id ?? item.id,
-      quantity: item.quantity,
-      price: item.price
-    }))
+   
+cart.map((item) => {
+  const price = Number(
+    item.price ?? item.product?.price ?? item.unit_price
   );
 
+  if (
+    !Number.isFinite(price) ||
+    price < 0 ||
+    (item.price == null &&
+     item.product?.price == null &&
+     item.unit_price == null)
+  ) {
+    throw new Error(
+      "Missing or invalid price for cart item: " +
+      (item.product_name ?? item.name ?? item.id ?? "unknown")
+    );
+  }
+
+  return {
+    order_id: order.id,
+    product_id: item.product_id ?? item.id ?? item.product?.id,
+    quantity: item.quantity,
+    price: price
+  };
+})
+ 
 if (itemsError) {
   throw itemsError;
 }
