@@ -795,10 +795,15 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
 
     
 
-const orderItems = cart.map(item => {
-  const productId = item.id;
 
-  if (productId === undefined || productId === null) {
+const orderItems = cart.map(item => {
+  const productId = item.id ?? item.product_id;
+
+  if (
+    productId === undefined ||
+    productId === null ||
+    productId === ""
+  ) {
     throw new Error(
       `Missing product ID for ${item.name || "cart item"}`
     );
@@ -816,15 +821,20 @@ const orderItems = cart.map(item => {
 
 console.log("Order items to save:", orderItems);
 
+const { data: savedItems, error: itemsError } = await db
+  .from("order_items")
+  .insert(orderItems)
+  .select();
 
+if (itemsError) {
+  console.error("Failed to save order items:", itemsError);
+  throw itemsError;
+}
 
-    const { error: itemsError } = await db
-      .from("order_items")
-      .insert(orderItems);
+console.log("Order items saved successfully:", savedItems);
 
-    if (itemsError) throw itemsError;
+setMessage("Order created. Requesting M-Pesa payment...");
 
-    setMessage("Order created. Requesting M-Pesa payment...");
 
     const formattedPhone = normalizedPhone.startsWith("+")
       ? normalizedPhone.slice(1)
