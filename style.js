@@ -779,54 +779,37 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
       and amount before initiating the M-Pesa request.
     */
 
-    const { data: order, error: orderError } = await db
-      .from("orders")
-      .insert({
-        user_id: user.id,
-        total_amount: amount,
-        status: "pending"
-      })
-      .select("id")
-      .single();
+const { data: order, error: orderError } = await db
+  .from("orders")
+  .insert({
+    user_id: user.id,
+    total_amount: amount,
+    status: "pending"
+  })
+  .select()
+  .single();
 
-    if (orderError) throw orderError;
+if (orderError) {
+  throw orderError;
+}
 
-    orderId = order.id;
-
-   
-const orderItems = cart.map(item => {
-  const productId = item.id ?? item.product_id;
-
-  if (
-    productId === undefined ||
-    productId === null ||
-    productId === ""
-  ) {
-    throw new Error(
-      `Missing product ID for ${item.name || "cart item"}`
-    );
-  }
-
-  return {
-    order_id: orderId,
-    product_id: String(productId),
-    product_name: item.name,
-    quantity: Number(item.quantity),
-    unit_price: Number(item.price),
-    image_url: item.image || null
-  };
-});
-
-console.log("Order items to save:", orderItems);
-
+// Save the products belonging to this order
 const { error: itemsError } = await db
   .from("order_items")
-  .insert(orderItems);
+  .insert(
+    cart.map((item) => ({
+      order_id: order.id,
+      product_id: item.product_id ?? item.id,
+      quantity: item.quantity,
+      price: item.price
+    }))
+  );
 
 if (itemsError) {
-  console.error("Order items insert failed:", itemsError);
   throw itemsError;
 }
+
+    
 
 
 console.log("Order items saved successfully:", savedItems);
