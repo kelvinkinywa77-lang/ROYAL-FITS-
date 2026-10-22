@@ -98,92 +98,37 @@
     </div>
   </section>
 
-<script type="module">
-  import { createClient } from
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+<section class="mpesa-payment">
+  <h2>Pay with M-Pesa</h2>
+  <p>Enter your M-Pesa phone number to receive a payment prompt.</p>
 
-  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'YOUR_SUPABASE_PUBLISHABLE_KEY';
+  <form id="mpesa-form">
+    <label for="mpesa-phone">M-Pesa phone number</label>
+    <input
+      id="mpesa-phone"
+      type="tel"
+      placeholder="0712345678"
+      autocomplete="tel"
+      required
+    />
 
-  const supabase = createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
+    <label for="mpesa-amount">Amount (KSh)</label>
+    <input
+      id="mpesa-amount"
+      type="number"
+      min="1"
+      step="1"
+      placeholder="100"
+      required
+    />
 
-  const form = document.getElementById('mpesa-form');
-  const button = document.getElementById('mpesa-pay-button');
-  const message = document.getElementById('mpesa-message');
+    <button id="mpesa-pay-button" type="submit">
+      Pay with M-Pesa
+    </button>
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const rawPhone = document
-      .getElementById('mpesa-phone').value.trim();
-
-    const rawAmount = document
-      .getElementById('mpesa-amount').value;
-
-    // Convert common Kenyan phone formats to 2547XXXXXXXX.
-    const phone = rawPhone.replace(/[\s-]/g, '')
-      .replace(/^0/, '254')
-      .replace(/^\+/, '');
-
-    const amount = Number(rawAmount);
-
-    if (!/^254[17]\d{8}$/.test(phone)) {
-      message.textContent =
-        'Enter a valid Kenyan mobile number, e.g. 0712345678.';
-      return;
-    }
-
-    if (!Number.isSafeInteger(amount) || amount < 1) {
-      message.textContent = 'Enter a valid whole-number amount.';
-      return;
-    }
-
-    button.disabled = true;
-    message.textContent = 'Sending payment request...';
-
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        'mpesa-stk-push',
-        {
-          body: { phone, amount }
-        }
-      );
-
-      if (error) {
-        let details = error.message;
-
-        if (error.context) {
-          try {
-            const body = await error.context.json();
-            details = body.error || body.message || details;
-          } catch (_) {}
-        }
-
-        throw new Error(details);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      message.textContent =
-        data?.CustomerMessage ||
-        data?.customerMessage ||
-        data?.message ||
-        'Request submitted. Check your phone for the M-Pesa prompt.';
-
-    } catch (error) {
-      console.error('M-Pesa request failed:', error);
-      message.textContent =
-        'Could not initiate payment. Please try again.';
-    } finally {
-      button.disabled = false;
-    }
-  });
-</script>
+    <p id="mpesa-message" role="status" aria-live="polite"></p>
+  </form>
+</section>
 
   <!-- MAIN SHOP CONTENT -->
   <main id="shopContent">
@@ -498,6 +443,93 @@
       });
     });
   </script>
+
+<script type="module">
+  import { createClient } from
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'YOUR_SUPABASE_PUBLISHABLE_KEY';
+
+  const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  const form = document.getElementById('mpesa-form');
+  const button = document.getElementById('mpesa-pay-button');
+  const message = document.getElementById('mpesa-message');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const rawPhone = document
+      .getElementById('mpesa-phone').value.trim();
+
+    const rawAmount = document
+      .getElementById('mpesa-amount').value;
+
+    // Convert common Kenyan phone formats to 2547XXXXXXXX.
+    const phone = rawPhone.replace(/[\s-]/g, '')
+      .replace(/^0/, '254')
+      .replace(/^\+/, '');
+
+    const amount = Number(rawAmount);
+
+    if (!/^254[17]\d{8}$/.test(phone)) {
+      message.textContent =
+        'Enter a valid Kenyan mobile number, e.g. 0712345678.';
+      return;
+    }
+
+    if (!Number.isSafeInteger(amount) || amount < 1) {
+      message.textContent = 'Enter a valid whole-number amount.';
+      return;
+    }
+
+    button.disabled = true;
+    message.textContent = 'Sending payment request...';
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'mpesa-stk-push',
+        {
+          body: { phone, amount }
+        }
+      );
+
+      if (error) {
+        let details = error.message;
+
+        if (error.context) {
+          try {
+            const body = await error.context.json();
+            details = body.error || body.message || details;
+          } catch (_) {}
+        }
+
+        throw new Error(details);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      message.textContent =
+        data?.CustomerMessage ||
+        data?.customerMessage ||
+        data?.message ||
+        'Request submitted. Check your phone for the M-Pesa prompt.';
+
+    } catch (error) {
+      console.error('M-Pesa request failed:', error);
+      message.textContent =
+        'Could not initiate payment. Please try again.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
 
 </body>
 </html>
