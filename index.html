@@ -5,531 +5,643 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Royal Fits Boutique254 | Fashion Store</title>
-  <meta name="description"
-        content="Shop stylish fashion at Royal Fits Boutique254 in Nairobi, Kenya.">
+  <title>ROYAL FITS BOUTIQUE254 | Fashion Store</title>
+
+  <meta
+    name="description"
+    content="Shop stylish fashion at ROYAL FITS BOUTIQUE254 in Nairobi, Kenya. Browse our collection and order online."
+  >
+
+  <meta name="theme-color" content="#40185e">
 
   <link rel="stylesheet" href="style.css">
+
+  <link
+    rel="icon"
+    href="favicon.ico"
+    type="image/x-icon"
+  >
 </head>
+
 <body>
 
-  <!-- TOP BAR -->
-  <div class="topbar">
-    Welcome to Royal Fits Boutique254
-    <span>📍 Nairobi, Kenya | Prices in KSh</span>
+  <!-- ================= TOP BAR ================= -->
+
+  <div class="top-bar">
+    <p>Welcome to ROYAL FITS BOUTIQUE254</p>
+    <p>Fashion • Style • Confidence</p>
   </div>
 
-  <!-- HEADER -->
-  <header class="header">
-    <a class="brand" href="#">
-      <div>ROYAL FITS <span>254</span></div>
-      <small>B O U T I Q U E</small>
-    </a>
 
-    <form id="searchForm" class="search">
-      <input
-        id="searchInput"
-        type="search"
-        placeholder="Search dresses, shoes, bags..."
-      >
-      <button type="submit">Search</button>
-    </form>
+  <!-- ================= HEADER ================= -->
 
-    <button class="header-btn" id="accountBtn" type="button">
-      👤 Account
-    </button>
+  <header class="main-header">
 
-    <button class="header-btn" id="cartBtn" type="button">
-      🛍 Cart (<span id="cartCount">0</span>)
-    </button>
-  </header>
+    <div class="logo">
+      <a href="#" id="homeLink">
+        <span class="logo-main">ROYAL FITS</span>
+        <span class="logo-sub">BOUTIQUE254</span>
+      </a>
+    </div>
 
-  <!-- CATEGORY NAVIGATION -->
-  <nav class="navigation" id="categories">
-    <button class="category active" data-category="All" type="button">
-      All Products
-    </button>
+    <nav class="main-nav">
+      <a href="#" id="shopBtn">Home</a>
+      <a href="#categories">Categories</a>
+      <button type="button" id="myOrdersBtn">
+        My Orders
+      </button>
+    </nav>
 
-    <button class="category" data-category="Women" type="button">
-      Women
-    </button>
-
-    <button class="category" data-category="Men" type="button">
-      Men
-    </button>
-
-    <button class="category" data-category="Shoes" type="button">
-      Shoes
-    </button>
-
-    <button class="category" data-category="Bags" type="button">
-      Bags
-    </button>
-
-    <button class="category" data-category="Accessories" type="button">
-      Accessories
-    </button>
-
-    <!-- MY ORDERS BUTTON: AFTER ACCESSORIES -->
-    <button class="category" id="myOrdersBtn" type="button">
-      📦 My Orders
-    </button>
-  </nav>
-
-  <!-- MY ORDERS: DISPLAYED DIRECTLY AFTER CATEGORY NAVIGATION -->
-  <section id="myOrdersSection" class="hidden">
-    <div class="section-heading">
-      <div>
-        <h2>My Orders</h2>
-        <p>View the shoes and clothes you have ordered.</p>
-      </div>
+    <div class="header-actions">
 
       <button
-        id="backToShopBtn"
-        class="secondary-btn"
         type="button"
+        id="accountBtn"
+        aria-label="Open account"
       >
-        ← Back to Shop
+        <span aria-hidden="true">👤</span>
+        <span>Account</span>
       </button>
+
+      <button
+        type="button"
+        id="cartBtn"
+        aria-label="Open shopping cart"
+      >
+        <span aria-hidden="true">🛒</span>
+        <span>Cart</span>
+        <span id="cartCount">0</span>
+      </button>
+
     </div>
 
-    <div id="myOrdersList">
-      <p>Your ordered items will appear here.</p>
-    </div>
+  </header>
+
+
+  <!-- ================= SEARCH ================= -->
+
+  <section class="search-section">
+
+    <form id="searchForm">
+
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Search clothes, shoes and accessories..."
+        aria-label="Search products"
+      >
+
+      <button type="submit">
+        Search
+      </button>
+
+    </form>
+
   </section>
 
-<section class="mpesa-payment">
-  <h2>Pay with M-Pesa</h2>
-  <p>Enter your M-Pesa phone number to receive a payment prompt.</p>
 
-  <form id="mpesa-form">
-    <label for="mpesa-phone">M-Pesa phone number</label>
-    <input
-      id="mpesa-phone"
-      type="tel"
-      placeholder="0712345678"
-      autocomplete="tel"
-      required
-    />
+  <!-- ================= SHOP CONTENT ================= -->
 
-    <label for="mpesa-amount">Amount (KSh)</label>
-    <input
-      id="mpesa-amount"
-      type="number"
-      min="1"
-      step="1"
-      placeholder="100"
-      required
-    />
-
-    <button id="mpesa-pay-button" type="submit">
-      Pay with M-Pesa
-    </button>
-
-    <p id="mpesa-message" role="status" aria-live="polite"></p>
-  </form>
-</section>
-
-  <!-- MAIN SHOP CONTENT -->
   <main id="shopContent">
 
-    <!-- HERO -->
+    <!-- HERO SECTION -->
+
     <section class="hero">
+
       <div class="hero-content">
-        <p class="eyebrow">YOUR STYLE. YOUR ROYALTY.</p>
 
-        <h1>Fashion that makes you feel royal.</h1>
-
-        <p>
-          Discover beautiful clothing, shoes, handbags and accessories
-          at affordable prices.
+        <p class="hero-label">
+          YOUR STYLE, YOUR IDENTITY
         </p>
 
-        <button class="gold-btn" id="shopBtn" type="button">
-          SHOP COLLECTION →
+        <h1>
+          Welcome to <span>ROYAL FITS</span>
+        </h1>
+
+        <p>
+          Discover fashion that matches your personality.
+          Shop your favourite styles at ROYAL FITS BOUTIQUE254.
+        </p>
+
+        <a href="#shop" class="hero-btn">
+          Shop Now
+        </a>
+
+      </div>
+
+    </section>
+
+
+    <!-- CATEGORIES -->
+
+    <section class="categories-section" id="categories">
+
+      <div class="section-heading">
+        <p class="section-label">EXPLORE OUR COLLECTION</p>
+        <h2>Shop by Category</h2>
+      </div>
+
+      <div class="category-buttons">
+
+        <button
+          type="button"
+          class="category-btn active"
+          data-category="all"
+        >
+          All Products
         </button>
+
+        <button
+          type="button"
+          class="category-btn"
+          data-category="men"
+        >
+          Men
+        </button>
+
+        <button
+          type="button"
+          class="category-btn"
+          data-category="women"
+        >
+          Women
+        </button>
+
+        <button
+          type="button"
+          class="category-btn"
+          data-category="shoes"
+        >
+          Shoes
+        </button>
+
+        <button
+          type="button"
+          class="category-btn"
+          data-category="accessories"
+        >
+          Accessories
+        </button>
+
       </div>
 
-      <div class="crown">👑</div>
     </section>
 
-    <!-- BENEFITS -->
-    <section class="benefits">
-      <div>
-        🚚 <strong>Nairobi Delivery</strong>
-        <small>Delivery options available</small>
-      </div>
-
-      <div>
-        💳 <strong>M-Pesa</strong>
-        <small>Payment integration coming soon</small>
-      </div>
-
-      <div>
-        ✨ <strong>Fashion Finds</strong>
-        <small>Styles for every occasion</small>
-      </div>
-
-      <div>
-        🔒 <strong>Customer Accounts</strong>
-        <small>Secure customer sign-in</small>
-      </div>
-    </section>
 
     <!-- PRODUCTS -->
-    <section id="shop">
-      <div class="section-heading">
-        <div>
-          <h2>Our Fashion Collection</h2>
-          <p>Find your next favourite look.</p>
-        </div>
 
-        <span id="productCount"></span>
+    <section class="products-section" id="shop">
+
+      <div class="section-heading">
+        <p class="section-label">FIND YOUR PERFECT LOOK</p>
+        <h2>Our Products</h2>
+        <p id="productCount">Loading products...</p>
       </div>
 
-      <div class="products" id="productGrid"></div>
+      <div id="productGrid" class="product-grid">
+
+        <p class="loading-message">
+          Loading products...
+        </p>
+
+      </div>
+
     </section>
 
-    <!-- PROMOTION -->
-    <section class="promo">
-      <div>
-        <h2>Discover your signature style 👑</h2>
-        <p>Join Royal Fits Boutique254 today.</p>
+
+    <!-- WHY SHOP WITH US -->
+
+    <section class="benefits-section">
+
+      <div class="section-heading">
+        <h2>Why Shop With Us?</h2>
       </div>
 
-      <button class="gold-btn" id="registerBtn" type="button">
-        CREATE ACCOUNT
-      </button>
+      <div class="benefits-grid">
+
+        <div class="benefit-item">
+          <span aria-hidden="true">👕</span>
+          <h3>Trendy Fashion</h3>
+          <p>Discover styles for different occasions.</p>
+        </div>
+
+        <div class="benefit-item">
+          <span aria-hidden="true">💳</span>
+          <h3>M-Pesa Payments</h3>
+          <p>Pay using M-Pesa when placing your order.</p>
+        </div>
+
+        <div class="benefit-item">
+          <span aria-hidden="true">🛍️</span>
+          <h3>Easy Shopping</h3>
+          <p>Browse products and manage your orders online.</p>
+        </div>
+
+      </div>
+
     </section>
 
   </main>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-grid">
+
+  <!-- ================= MY ORDERS ================= -->
+
+  <section
+    id="myOrdersSection"
+    class="my-orders-section"
+    hidden
+  >
+
+    <div class="orders-header">
 
       <div>
-        <a class="brand footer-brand" href="#">
-          <div>ROYAL FITS <span>254</span></div>
-          <small>B O U T I Q U E</small>
-        </a>
-
-        <p>Your fashion destination in Nairobi, Kenya.</p>
+        <p class="section-label">YOUR ACCOUNT</p>
+        <h2>My Orders</h2>
+        <p>View your orders, products and payment status.</p>
       </div>
 
-      <div>
-        <h3>QUICK LINKS</h3>
-        <a href="#shop">Shop products</a>
-        <button id="footerAccount" type="button">My account</button>
+      <button type="button" id="backToShopBtn">
+        Back to Shop
+      </button>
+
+    </div>
+
+    <div id="myOrdersList">
+
+      <p>Your orders will appear here when you sign in.</p>
+
+    </div>
+
+  </section>
+
+
+  <!-- ================= FOOTER ================= -->
+
+  <footer class="main-footer">
+
+    <div class="footer-content">
+
+      <div class="footer-brand">
+        <h2>ROYAL FITS</h2>
+        <p>BOUTIQUE254</p>
+        <p>Your style, your identity.</p>
       </div>
 
-      <div>
-        <h3>CUSTOMER CARE</h3>
-        <p>Delivery in Nairobi</p>
-        <p>Phone: 0180732821</p>
-        <p>Email: kelvinkinywa77@gmail.com</p>
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <a href="#" id="footerShopLink">Shop</a>
+        <a href="#categories">Categories</a>
+        <a href="#" id="footerOrdersLink">My Orders</a>
+      </div>
+
+      <div class="footer-contact">
+        <h3>Customer Information</h3>
+        <p>Shop online with ROYAL FITS BOUTIQUE254.</p>
+        <p>Payments: M-Pesa</p>
       </div>
 
     </div>
 
-    <p class="copyright">
-      © <span id="year"></span>
-      Royal Fits Boutique254. All rights reserved.
-    </p>
+    <div class="footer-bottom">
+      <p>
+        &copy; <span id="currentYear"></span>
+        ROYAL FITS BOUTIQUE254. All rights reserved.
+      </p>
+    </div>
+
   </footer>
 
-  <!-- SHOPPING CART -->
-  <div class="overlay hidden" id="cartOverlay">
-    <section class="panel">
 
-      <div class="panel-heading">
-        <h2>Your Shopping Cart</h2>
+  <!-- ================= CART OVERLAY ================= -->
+
+  <div
+    id="cartOverlay"
+    class="overlay"
+    aria-hidden="true"
+  >
+
+    <div
+      class="cart-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cartTitle"
+    >
+
+      <div class="panel-header">
+
+        <h2 id="cartTitle">Your Shopping Cart</h2>
 
         <button
-          class="close-btn"
-          data-close="cartOverlay"
           type="button"
-        >×</button>
+          id="closeCartBtn"
+          class="close-btn"
+          aria-label="Close cart"
+        >
+          &times;
+        </button>
+
       </div>
 
-      <div id="cartItems"></div>
 
-      <div class="cart-total">
-        <span>Total</span>
-        <strong id="cartTotal">KSh 0</strong>
+      <!-- CART ITEMS -->
+
+      <div id="cartItems" class="cart-items">
+
+        <p>Your cart is empty.</p>
+
       </div>
 
-      <p class="muted">
-        Delivery charges will be confirmed before an order is completed.
-      </p>
 
-      <button
-        class="primary-btn full-width"
-        id="checkoutBtn"
-        type="button"
-      >
-        LOGIN TO PLACE ORDER
-      </button>
+      <!-- CART TOTAL -->
 
-      <button
-        class="secondary-btn full-width"
-        data-close="cartOverlay"
-        type="button"
-      >
-        Continue shopping
-      </button>
+      <div class="cart-summary">
 
-    </section>
-  </div>
-
-  <!-- LOGIN AND REGISTRATION -->
-  <div class="overlay hidden" id="accountOverlay">
-    <section class="panel account-panel">
-
-      <div class="panel-heading">
-        <div>
-          <h2 id="accountTitle">Customer Login</h2>
-          <p class="muted">Welcome to Royal Fits Boutique254</p>
+        <div class="cart-total-row">
+          <span>Total:</span>
+          <strong id="cartTotal">KSh 0</strong>
         </div>
 
-        <button
-          class="close-btn"
-          data-close="accountOverlay"
-          type="button"
-        >×</button>
       </div>
+
+
+      <!-- M-PESA CHECKOUT PHONE INPUT -->
+
+      <div class="mpesa-checkout">
+
+        <label for="mpesa-phone">
+          M-Pesa phone number
+        </label>
+
+        <input
+          id="mpesa-phone"
+          type="tel"
+          placeholder="0712345678"
+          autocomplete="tel"
+          inputmode="tel"
+          required
+        >
+
+        <p class="muted">
+          Your payment amount will be calculated from your cart total.
+        </p>
+
+        <p
+          id="mpesa-message"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+      </div>
+
+
+      <!-- CHECKOUT BUTTON -->
+
+      <button
+        type="button"
+        id="checkoutBtn"
+        class="checkout-btn"
+      >
+        PLACE ORDER &amp; PAY WITH M-PESA
+      </button>
+
+      <p class="checkout-note">
+        Your order will be created and an M-Pesa payment request
+        will be initiated. Wait for payment confirmation.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= ACCOUNT OVERLAY ================= -->
+
+  <div
+    id="accountOverlay"
+    class="overlay"
+    aria-hidden="true"
+  >
+
+    <div
+      class="account-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="accountTitle"
+    >
+
+      <div class="panel-header">
+
+        <h2 id="accountTitle">Customer Account</h2>
+
+        <button
+          type="button"
+          id="closeAccountBtn"
+          class="close-btn"
+          aria-label="Close account"
+        >
+          &times;
+        </button>
+
+      </div>
+
+
+      <!-- ACCOUNT FORM -->
 
       <form id="accountForm">
 
-        <div id="registerFields" class="hidden">
+        <!-- REGISTRATION FIELDS -->
 
-          <label for="fullName">Full name</label>
-          <input
-            id="fullName"
-            name="fullName"
-            type="text"
-            autocomplete="name"
-            placeholder="Your full name"
-          >
+        <div id="registerFields" hidden>
 
-          <label for="phone">Phone number</label>
+          <div class="form-group">
+
+            <label for="fullName">
+              Full Name
+            </label>
+
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              placeholder="Enter your full name"
+              autocomplete="name"
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="phone">
+              Phone Number
+            </label>
+
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="0712345678"
+              autocomplete="tel"
+            >
+
+          </div>
+
+        </div>
+
+
+        <!-- EMAIL -->
+
+        <div class="form-group">
+
+          <label for="email">
+            Email Address
+          </label>
+
           <input
-            id="phone"
-            name="phone"
-            type="tel"
-            autocomplete="tel"
-            placeholder="07XX XXX XXX"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
           >
 
         </div>
 
-        <label for="email">Email address</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-          placeholder="you@example.com"
-        >
 
-        <label for="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          minlength="6"
-          required
-          placeholder="At least 6 characters"
-        >
+        <!-- PASSWORD -->
 
-        <p class="muted" id="passwordHint">
-          Use your registered email and password.
-        </p>
+        <div class="form-group">
 
-        <p class="error" id="formError" role="alert"></p>
+          <label for="password">
+            Password
+          </label>
+
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+            minlength="6"
+          >
+
+        </div>
+
+
+        <!-- ACCOUNT MESSAGE -->
+
+        <p
+          id="accountMessage"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+
+        <!-- SUBMIT -->
 
         <button
-          class="primary-btn full-width"
-          id="accountSubmit"
           type="submit"
+          id="accountSubmit"
+          class="account-submit-btn"
         >
           LOGIN
         </button>
 
       </form>
 
-      <p class="switch-text">
-        <span id="switchPrompt">New customer?</span>
 
-        <button class="text-btn" id="switchAccount" type="button">
-          Register here
-        </button>
-      </p>
+      <!-- SWITCH LOGIN / REGISTER -->
 
-      <p id="accountStatus" class="muted" aria-live="polite"></p>
+      <div class="account-switch">
+
+        <p id="switchAccount">
+          Don't have an account?
+          <button type="button" id="registerBtn">
+            Create Account
+          </button>
+        </p>
+
+      </div>
+
+
+      <!-- PASSWORD RESET -->
 
       <button
-        id="logoutBtn"
-        class="secondary-btn full-width hidden"
         type="button"
+        id="resetPasswordBtn"
+        class="text-btn"
       >
-        LOG OUT
+        Forgot your password?
       </button>
 
-      <button id="resetPasswordBtn" class="text-btn" type="button">
-        Forgot password?
+
+      <!-- LOGOUT -->
+
+      <button
+        type="button"
+        id="logoutBtn"
+        class="logout-btn"
+        hidden
+      >
+        Logout
       </button>
 
-    </section>
+    </div>
+
   </div>
 
-  <!-- TOAST MESSAGE -->
-  <div class="toast hidden" id="toast" role="status"></div>
 
-  <!-- PRODUCT IMAGE POPUP -->
-  <div id="imagePopup" class="image-popup" onclick="closeImage()">
+  <!-- ================= PRODUCT IMAGE POPUP ================= -->
 
-    <button
-      class="close-popup"
-      aria-label="Close image"
-      onclick="closeImage()"
-    >&times;</button>
+  <div
+    id="imagePopup"
+    class="image-popup"
+    aria-hidden="true"
+  >
 
-    <img
-      id="popupImage"
-      src=""
-      alt="Product preview"
-      onclick="event.stopPropagation()"
-    >
+    <div class="image-popup-content">
 
-    <p id="popupName"></p>
+      <button
+        type="button"
+        id="closeImagePopupBtn"
+        class="close-btn"
+        aria-label="Close product image"
+      >
+        &times;
+      </button>
+
+      <img
+        id="popupImage"
+        src=""
+        alt="Selected product"
+      >
+
+      <h3 id="popupName"></h3>
+
+    </div>
+
   </div>
 
-  <!-- SUPABASE MUST LOAD BEFORE style.js -->
+
+  <!-- ================= TOAST MESSAGE ================= -->
+
+  <div
+    id="toast"
+    class="toast"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+  <!-- ================= JAVASCRIPT ================= -->
+
+  <!-- Supabase JavaScript library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Your main website JavaScript -->
   <script src="style.js"></script>
-
-  <!-- MY ORDERS PAGE POSITION AND BACK BUTTON -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const ordersButton = document.getElementById("myOrdersBtn");
-      const ordersSection = document.getElementById("myOrdersSection");
-      const shopContent = document.getElementById("shopContent");
-      const backButton = document.getElementById("backToShopBtn");
-
-      ordersButton?.addEventListener("click", () => {
-        if (!ordersSection || !shopContent) return;
-
-        // Show orders in the area immediately after category navigation.
-        shopContent.classList.add("hidden");
-        ordersSection.classList.remove("hidden");
-
-        ordersSection.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-      });
-
-      backButton?.addEventListener("click", () => {
-        ordersSection?.classList.add("hidden");
-        shopContent?.classList.remove("hidden");
-
-        document.getElementById("categories")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-      });
-    });
-  </script>
-
-<script type="module">
-  import { createClient } from
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-  const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'YOUR_SUPABASE_PUBLISHABLE_KEY';
-
-  const supabase = createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
-
-  const form = document.getElementById('mpesa-form');
-  const button = document.getElementById('mpesa-pay-button');
-  const message = document.getElementById('mpesa-message');
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const rawPhone = document
-      .getElementById('mpesa-phone').value.trim();
-
-    const rawAmount = document
-      .getElementById('mpesa-amount').value;
-
-    // Convert common Kenyan phone formats to 2547XXXXXXXX.
-    const phone = rawPhone.replace(/[\s-]/g, '')
-      .replace(/^0/, '254')
-      .replace(/^\+/, '');
-
-    const amount = Number(rawAmount);
-
-    if (!/^254[17]\d{8}$/.test(phone)) {
-      message.textContent =
-        'Enter a valid Kenyan mobile number, e.g. 0712345678.';
-      return;
-    }
-
-    if (!Number.isSafeInteger(amount) || amount < 1) {
-      message.textContent = 'Enter a valid whole-number amount.';
-      return;
-    }
-
-    button.disabled = true;
-    message.textContent = 'Sending payment request...';
-
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        'mpesa-stk-push',
-        {
-          body: { phone, amount }
-        }
-      );
-
-      if (error) {
-        let details = error.message;
-
-        if (error.context) {
-          try {
-            const body = await error.context.json();
-            details = body.error || body.message || details;
-          } catch (_) {}
-        }
-
-        throw new Error(details);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      message.textContent =
-        data?.CustomerMessage ||
-        data?.customerMessage ||
-        data?.message ||
-        'Request submitted. Check your phone for the M-Pesa prompt.';
-
-    } catch (error) {
-      console.error('M-Pesa request failed:', error);
-      message.textContent =
-        'Could not initiate payment. Please try again.';
-    } finally {
-      button.disabled = false;
-    }
-  });
-</script>
 
 </body>
 </html>
