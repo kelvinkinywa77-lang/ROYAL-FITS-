@@ -283,8 +283,8 @@ document.addEventListener("keydown", event => {
 /* 7. SHOPPING CART */
 
 function addToCart(id) {
-  const product = products.find(p => Number(p.id) === Number(id));
-
+  
+const product = products.find(p => String(p.id) === String(id));
   if (!product) {
     showToast("Product not found.");
     return;
