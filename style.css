@@ -431,6 +431,55 @@ a {
   position: relative;
 }
 
+.mpesa-payment {
+  max-width: 420px;
+  margin: 30px auto;
+  padding: 24px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-family: Arial, sans-serif;
+  background: #fff;
+}
+
+.mpesa-payment h2 {
+  color: #168449;
+  margin-top: 0;
+}
+
+.mpesa-payment label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.mpesa-payment input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.mpesa-payment button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #168449;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.mpesa-payment button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .product-emoji {
   font-size: 82px;
   filter: drop-shadow(0 5px 4px #0001);
