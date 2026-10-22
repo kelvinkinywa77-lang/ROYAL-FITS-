@@ -1013,19 +1013,19 @@ if (mpesaPayBtn) {
     mpesaMessage.textContent = "Requesting M-Pesa payment...";
 
     try {
-      console.log("Starting M-Pesa STK Push", {
-        functionName: "mpesa-stk-push",
+      console.log("Startig initiate-stk-push", {
+        functionName: "initiate-stk-push",
         amount
       });
 
       const { data, error } = await db.functions.invoke(
-        "mpesa-stk-push",
+        "initiate-stk-push",
         {
           body: { phone, amount }
         }
       );
 
-      console.log("STK Push response:", { data, error });
+      console.log("initiate-stk-push:", { data, error });
 
       if (error) {
         let detail = error.message;
@@ -1054,7 +1054,7 @@ if (mpesaPayBtn) {
         "Request submitted. Check your phone for the M-Pesa prompt.";
 
     } catch (error) {
-      console.error("M-Pesa STK Push failed:", error);
+      console.error("initiate-stk-push failed:", error);
       mpesaMessage.textContent =
         "Payment request failed: " +
         (error.message || "Unknown error");
