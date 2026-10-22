@@ -632,7 +632,7 @@ if (accountForm) {
   });
 }
 
-/* 13. ACCOUNT STATUS AND LOGOUT */
+
 
 
 /* 13. ACCOUNT STATUS AND LOGOUT */
@@ -793,13 +793,26 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
 
     orderId = order.id;
 
-    const orderItems = cart.map(item => ({
-      order_id: orderId,
-      product_name: item.name,
-      quantity: item.quantity,
-      unit_price: Number(item.price),
-      image_url: item.image || null
-    }));
+    
+const orderItems = cart.map(item => {
+  const productId = item.product_id ?? item.id;
+
+  if (productId == null) {
+    throw new Error(
+      `Missing product ID for ${item.name || "cart item"}`
+    );
+  }
+
+  return {
+    order_id: orderId,
+    product_id: productId,
+    product_name: item.name,
+    quantity: Number(item.quantity),
+    unit_price: Number(item.price),
+    image_url: item.image || null
+  };
+});
+
 
     const { error: itemsError } = await db
       .from("order_items")
