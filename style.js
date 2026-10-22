@@ -237,7 +237,7 @@ function displayProducts() {
 
           <button
             type="button"
-            class="primary-btn full-width add-to-cart-btn"
+            class="primary-btn full-widt noh add-to-cart-btn"
             onclick="addToCart(${Number(product.id)})"
             ${soldOut ? "disabled" : ""}
           >
@@ -793,9 +793,7 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
 
     orderId = order.id;
 
-    
-
-
+   
 const orderItems = cart.map(item => {
   const productId = item.id ?? item.product_id;
 
@@ -811,7 +809,7 @@ const orderItems = cart.map(item => {
 
   return {
     order_id: orderId,
-    product_id: productId,
+    product_id: String(productId),
     product_name: item.name,
     quantity: Number(item.quantity),
     unit_price: Number(item.price),
@@ -821,15 +819,15 @@ const orderItems = cart.map(item => {
 
 console.log("Order items to save:", orderItems);
 
-const { data: savedItems, error: itemsError } = await db
+const { error: itemsError } = await db
   .from("order_items")
-  .insert(orderItems)
-  .select();
+  .insert(orderItems);
 
 if (itemsError) {
-  console.error("Failed to save order items:", itemsError);
+  console.error("Order items insert failed:", itemsError);
   throw itemsError;
 }
+
 
 console.log("Order items saved successfully:", savedItems);
 
