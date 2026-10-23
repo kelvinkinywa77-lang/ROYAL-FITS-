@@ -860,7 +860,7 @@ console.log("Order items saved successfully:", savedItems);
     setMessage("Sending M-PESA payment request. Please wait...");
 
     const { data: paymentData, error: paymentError } =
-      await db.functions.invoke("mpesa-stk-push", {
+      await db.functions.invoke("initiate-stk-push", {
         body: {
           phone: normalizedPhone,
           amount: amount
