@@ -851,30 +851,51 @@ if (itemsError) {
 
 console.log("Order items saved successfully:", savedItems);
 
+   
     /*
-      An accepted STK request is NOT proof of payment.
-      Keep the order pending until the verified Safaricom
-      callback updates its payment status.
+      Send the actual M-PESA request through Supabase.
+      The Edge Function must be deployed first.
     */
 
+    setMessage("Sending M-PESA payment request. Please wait...");
+
+    const { data: paymentData, error: paymentError } =
+      await db.functions.invoke("mpesa-stk-push", {
+        body: {
+          phone: normalizedPhone,
+          amount: amount
+        }
+      });
+
+    console.log("M-PESA function response:", paymentData);
+    console.log("M-PESA function error:", paymentError);
+
+    if (paymentError) {
+      throw new Error(
+        paymentError.message ||
+        "Could not contact the M-PESA payment service."
+      );
+    }
+
+    if (!paymentData || paymentData.error) {
+      throw new Error(
+        paymentData?.error ||
+        paymentData?.message ||
+        "The M-PESA request was not accepted."
+      );
+    }
+
+    // Only clear the cart after the function responds successfully.
+    // This does not mean the customer has paid yet.
     cart = [];
     updateCart();
 
     setMessage(
-      "Payment request sent. Check your phone and enter your M-Pesa PIN if prompted. Your order remains pending until payment is confirmed."
+      paymentData.message ||
+      "M-PESA request submitted. Check your phone if a prompt is issued. Your order remains pending until payment is confirmed."
     );
 
-    showToast("Order created. Check your phone for the M-Pesa prompt.");
-
-  } catch (error) {
-    console.error("Checkout error:", error);
-
-    setMessage(
-      error.message ||
-      "Checkout failed. Check your connection and try again."
-    );
-
-    showToast("Checkout could not be completed. Check the message in your cart.");
+    showToast("M-PESA request submitted. Await payment confirmation.");
 
     /*
       Do not automatically delete an order here:
