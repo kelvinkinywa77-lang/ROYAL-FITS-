@@ -75,7 +75,6 @@ function closeOverlay(id) {
 }
 
 
-
 /* 4. LOAD DATABASE PRODUCTS */
 
 async function loadProducts() {
@@ -96,7 +95,7 @@ async function loadProducts() {
 
     if (data && data.length) {
       products = data.map(row => ({
-        id: row.id,
+        id: Number(row.id),
         name: row.name,
         category: row.category === "Womens" ? "Women" : row.category,
         price: Number(row.price || 0),
@@ -120,6 +119,7 @@ async function loadProducts() {
 }
 
 
+/* 5. DISPLAY PRODUCTS */
 
 
 /* 5. DISPLAY PRODUCTS — MATCHES THE PRODUCT CSS */
@@ -237,7 +237,7 @@ function displayProducts() {
 
           <button
             type="button"
-            class="primary-btn full-widt noh add-to-cart-btn"
+            class="primary-btn full-width add-to-cart-btn"
             onclick="addToCart(${Number(product.id)})"
             ${soldOut ? "disabled" : ""}
           >
@@ -283,15 +283,15 @@ document.addEventListener("keydown", event => {
 /* 7. SHOPPING CART */
 
 function addToCart(id) {
-  
-const product = products.find(p => String(p.id) === String(id));
+  const product = products.find(p => Number(p.id) === Number(id));
+
   if (!product) {
     showToast("Product not found.");
     return;
   }
 
   const hasStock = product.stock !== undefined && product.stock !== null;
-  const existing = cart.find(item => String(item.id) === String(id));
+  const existing = cart.find(item => Number(item.id) === Number(id));
 
   if (hasStock && (existing?.quantity || 0) >= Number(product.stock)) {
     showToast("Sorry, there is not enough stock available.");
@@ -309,7 +309,7 @@ const product = products.find(p => String(p.id) === String(id));
 }
 
 function removeFromCart(id) {
-const existing = cart.find(item => String(item.id) === String(id));  
+  cart = cart.filter(item => Number(item.id) !== Number(id));
   updateCart();
 }
 
@@ -433,7 +433,9 @@ function setAccountMode(registering) {
   }
 
   if (submit) {
-    submit.textContent = registering ? "CREATE ACCOUNT" : "LOGIN";
+    submit.textContent = registering
+      ? "CREATE ACCOUNT"
+      : "LOGIN";
   }
 
   if (fields) {
@@ -458,6 +460,10 @@ function setAccountMode(registering) {
       : "Enter your registered email and password.";
   }
 
+  if (hint) {
+    hint.classList.toggle("hidden", !registering);
+  }
+
   if (password) {
     password.autocomplete = registering
       ? "new-password"
@@ -470,6 +476,8 @@ function setAccountMode(registering) {
 
   if (error) error.textContent = "";
 }
+
+/* ACCOUNT BUTTONS */
 
 document.getElementById("accountBtn")?.addEventListener("click", () => {
   setAccountMode(false);
@@ -489,11 +497,6 @@ document.getElementById("registerBtn")?.addEventListener("click", () => {
 document.getElementById("switchAccount")?.addEventListener("click", () => {
   setAccountMode(!isRegistering);
 });
-
-
-
-
-/* 12. SUPABASE REGISTRATION AND LOGIN */
 
 /* 12. SUPABASE REGISTRATION AND LOGIN */
 
@@ -725,14 +728,17 @@ document.getElementById("checkoutBtn")?.addEventListener("click", async () => {
     return;
   }
 
- const phone = phoneInput?.value.trim() || "";
-const normalizedPhone = phone.replace(/[\s-]/g, "");
+  const phone = phoneInput?.value.trim() || "";
+  const normalizedPhone = phone.replace(/[\s-]/g, "");
 
+ 
 if (!/^(?:(?:\+?254|0)(?:7|1)\d{8})$/.test(normalizedPhone)) {
   setMessage("Enter a valid Kenyan M-Pesa number, e.g. 0712345678 or 0112345678.");
   phoneInput?.focus();
   return;
-} 
+}
+     
+
   const amount = Number(
     cart.reduce(
       (sum, item) => sum + Number(item.price || 0) * item.quantity,
@@ -778,83 +784,72 @@ if (!/^(?:(?:\+?254|0)(?:7|1)\d{8})$/.test(normalizedPhone)) {
       and amount before initiating the M-Pesa request.
     */
 
-const { data: order, error: orderError } = await db
-  .from("orders")
-  .insert({
-    user_id: user.id,
-    total_amount: amount,
-    status: "pending"
-  })
-  .select()
-  .single();
+    const { data: order, error: orderError } = await db
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        total_amount: amount,
+        status: "pending"
+      })
+      .select("id")
+      .single();
 
-if (orderError) {
-  throw orderError;
-}
+    if (orderError) throw orderError;
 
-// Save the products belonging to this order
-const { error: itemsError } = await db
-  .from("order_items")
-  .insert(
-   
-cart.map((item) => {
-  const price = Number(
-    item.price ?? item.product?.price ?? item.unit_price
-  );
+    orderId = order.id;
+
+  
+const orderItems = cart.map(item => {
+  const productId = item.id ?? item.product_id;
+  const price = Number(item.price);
+  const quantity = Number(item.quantity);
 
   if (
-    !Number.isFinite(price) ||
-    price < 0 ||
-    (item.price == null &&
-     item.product?.price == null &&
-     item.unit_price == null)
+    productId == null ||
+    !Number.isSafeInteger(Number(productId)) ||
+    Number(productId) <= 0
   ) {
     throw new Error(
-      "Missing or invalid price for cart item: " +
-      (item.product_name ?? item.name ?? item.id ?? "unknown")
+      `Missing or invalid product ID for ${item.name || "cart item"}.`
+    );
+  }
+
+  if (!Number.isFinite(price) || price < 0) {
+    throw new Error(
+      `Invalid price for ${item.name || "cart item"}.`
+    );
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new Error(
+      `Invalid quantity for ${item.name || "cart item"}.`
     );
   }
 
   return {
-    order_id: order.id,
-    product_id: item.product_id ?? item.id ?? item.product?.id,
-    quantity: item.quantity,
-    price: price
+    order_id: orderId,
+    product_id: Number(productId),
+    product_name: item.name,
+    quantity: quantity,
+    price: price,
+    unit_price: price,
+    image_url: item.image || null
   };
-})
- 
+});
+
+console.log("Order items to save:", orderItems);
+
+const { data: savedItems, error: itemsError } = await db
+  .from("order_items")
+  .insert(orderItems)
+  .select();
+
 if (itemsError) {
+  console.error("Failed to save order items:", itemsError);
   throw itemsError;
 }
 
-    
-
-
 console.log("Order items saved successfully:", savedItems);
-
-setMessage("Order created. Requesting M-Pesa payment...");
-
-
-    const formattedPhone = normalizedPhone.startsWith("+")
-      ? normalizedPhone.slice(1)
-      : normalizedPhone.startsWith("254")
-        ? normalizedPhone
-        : "254" + normalizedPhone.slice(1);
-
-    const { data: paymentData, error: paymentError } =
-      await db.functions.invoke("initiate-stk-push", {
-        body: {
-          phone: formattedPhone,
-          amount,
-          order_id: orderId
-        }
-      });
-
-    if (paymentError) throw paymentError;
-
-    if (paymentData?.error) {
-      throw new Error(paymentData.error);
-    }
 
     /*
       An accepted STK request is NOT proof of payment.
@@ -926,3 +921,4 @@ if (db) {
     updateAccountStatus(session?.user || null);
   });
 }
+
