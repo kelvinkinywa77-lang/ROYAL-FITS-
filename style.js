@@ -860,31 +860,31 @@ console.log("Order items saved successfully:", savedItems);
     setMessage("Sending M-PESA payment request. Please wait...");
 
     const { data: paymentData, error: paymentError } =
-      await db.functions.invoke("initiate-stk-push", {
-        body: {
-          phone: normalizedPhone,
-          amount: amount
-        }
-      });
-
-    console.log("M-PESA function response:", paymentData);
-    console.log("M-PESA function error:", paymentError);
-
-    if (paymentError) {
-      throw new Error(
-        paymentError.message ||
-        "Could not contact the M-PESA payment service."
-      );
+  await db.functions.invoke("initiate-stk-push", {
+    body: {
+      phone: normalizedPhone,
+      amount: amount,
+      order_id: order.id
     }
+  });
 
-    if (!paymentData || paymentData.error) {
-      throw new Error(
-        paymentData?.error ||
-        paymentData?.message ||
-        "The M-PESA request was not accepted."
-      );
-    }
+console.log("M-PESA function response:", paymentData);
+console.log("M-PESA function error:", paymentError);
 
+if (paymentError) {
+  throw new Error(
+    paymentError.message ||
+    "Could not contact the M-PESA payment service."
+  );
+}
+
+if (!paymentData || paymentData.error) {
+  throw new Error(
+    paymentData?.error ||
+    paymentData?.message ||
+    "The M-PESA request was not accepted."
+  );
+}
     // Only clear the cart after the function responds successfully.
     // This does not mean the customer has paid yet.
     cart = [];
