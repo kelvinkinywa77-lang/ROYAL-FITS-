@@ -236,9 +236,102 @@
     <p id="popupName"></p>
   </div>
 
+<!-- ACCOUNT LOGIN AND REGISTRATION WINDOW -->
+<div class="overlay hidden" id="accountOverlay">
+  <section class="panel">
+
+    <div class="panel-heading">
+      <h2 id="accountTitle">Customer Login</h2>
+
+      <button
+        class="close-btn"
+        data-close="accountOverlay"
+        type="button"
+        aria-label="Close account window"
+      >×</button>
+    </div>
+
+    <form id="accountForm">
+
+      <p id="formError" role="alert"></p>
+      <p id="accountStatus" role="status"></p>
+
+      <label for="email">Email address</label>
+      <input
+        id="email"
+        type="email"
+        autocomplete="email"
+        placeholder="Enter your email"
+        required
+      >
+
+      <div id="registerFields" class="hidden">
+
+        <label for="fullName">Full name</label>
+        <input
+          id="fullName"
+          type="text"
+          autocomplete="name"
+          placeholder="Enter your full name"
+        >
+
+        <label for="phone">Phone number</label>
+        <input
+          id="phone"
+          type="tel"
+          autocomplete="tel"
+          placeholder="0712345678"
+        >
+
+      </div>
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Enter your password"
+        required
+      >
+
+      <p id="passwordHint" class="muted hidden">
+        Create a strong password of at least 6 characters.
+      </p>
+
+      <button
+        id="accountSubmit"
+        class="primary-btn full-width"
+        type="submit"
+      >LOGIN</button>
+
+      <p>
+        <span id="switchPrompt">New customer?</span>
+        <button id="switchAccount" type="button" class="text-btn">
+          Register here
+        </button>
+      </p>
+
+      <button
+        id="resetPasswordBtn"
+        type="button"
+        class="text-btn"
+      >Forgot password?</button>
+
+      <button
+        id="logoutBtn"
+        type="button"
+        class="secondary-btn full-width hidden"
+      >LOG OUT</button>
+
+    </form>
+  </section>
+</div>
+<!-- END ACCOUNT WINDOW -->
+
   <!-- Load Supabase BEFORE style.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="style.js"></script>
 
 </body>
 </html>
+
