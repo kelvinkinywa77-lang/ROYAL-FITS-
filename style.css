@@ -1017,5 +1017,115 @@ footer button {
   }
 }
 
+/* ===== IMPROVED ACCOUNT FORM ===== */
 
+#accountOverlay {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
 
+#accountOverlay .panel,
+#accountOverlay .account-panel {
+  width: 100%;
+  max-width: 430px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  margin: auto;
+  padding: 28px 24px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+}
+
+#accountOverlay .panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+#accountOverlay #accountTitle {
+  margin: 0;
+  color: var(--purple);
+  font-size: 22px;
+}
+
+#accountOverlay #accountForm label {
+  display: block;
+  margin: 15px 0 7px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#accountOverlay #accountForm input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid #d9d0df;
+  border-radius: 7px;
+  font-size: 15px;
+}
+
+#accountOverlay #accountForm input:focus {
+  outline: 2px solid #e3d2ef;
+  border-color: var(--purple);
+}
+
+#accountOverlay #accountSubmit,
+#accountOverlay #logoutBtn {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px;
+  box-sizing: border-box;
+  border-radius: 7px;
+}
+
+#accountOverlay #accountSubmit {
+  background: var(--purple);
+  color: white;
+}
+
+#accountOverlay #switchPrompt {
+  font-size: 13px;
+}
+
+#accountOverlay #switchAccount,
+#accountOverlay #resetPasswordBtn {
+  background: none;
+  border: none;
+  color: var(--purple);
+  font-weight: bold;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+#accountOverlay #resetPasswordBtn {
+  display: block;
+  margin-top: 8px;
+}
+
+#accountOverlay #formError {
+  color: #b91c1c;
+}
+
+#accountOverlay #logoutBtn.hidden,
+#accountOverlay .hidden {
+  display: none !important;
+}
+
+@media (max-width: 480px) {
+  #accountOverlay {
+    padding: 12px;
+  }
+
+  #accountOverlay .panel,
+  #accountOverlay .account-panel {
+    padding: 22px 18px;
+  }
+}
