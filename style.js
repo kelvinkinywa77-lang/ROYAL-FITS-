@@ -1090,7 +1090,7 @@ delivery.textContent =
         ? new Date(order.created_at).toLocaleString("en-KE")
         : "";
 
-      card.append(title, total, status, date);
+      card.append(title, total, status, delivery, date);
 
       const heading = document.createElement("h4");
       heading.textContent = "Items in this order";
