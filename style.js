@@ -864,32 +864,52 @@ const { data: paymentData, error: paymentError } =
   await db.functions.invoke("initiate-stk-push", {
     body: {
       phone: normalizedPhone,
-      amount: Math.round(amount),
+      amount: Math.round(Number(amount)),
       orderId: order.id
     }
   });
 
+console.log("Order ID sent:", order.id);
+console.log("Phone sent:", normalizedPhone);
+console.log("Amount sent:", Math.round(Number(amount)));
+console.log("M-PESA function response:", paymentData);
+
 if (paymentError) {
   console.error("M-PESA function error:", paymentError);
 
-  if (paymentError.context) {
-    try {
-      console.error(
-        "M-PESA error details:",
-        await paymentError.context.clone().json()
-      );
-    } catch {
-      console.error("Could not read the function error response.");
+  // Show the actual error returned by the Edge Function
+  let details = "";
+
+  try {
+    const response = paymentError.context;
+    if (response && typeof response.clone === "function") {
+      const errorBody = await response.clone().json();
+      console.error("M-PESA server error details:", errorBody);
+      details =
+        errorBody.error ||
+        errorBody.message ||
+        errorBody.details ||
+        JSON.stringify(errorBody);
     }
+  } catch (e) {
+    console.error("Could not read error details:", e);
   }
 
   throw new Error(
-    "M-PESA request failed. Check the browser Console for details."
+    details || paymentError.message ||
+    "M-PESA request failed. Check the Supabase Edge Function logs."
   );
 }
 
-console.log("M-PESA function response:", paymentData);
+if (!paymentData || paymentData.error) {
+  throw new Error(
+    paymentData?.error ||
+    paymentData?.message ||
+    "The M-PESA request was not accepted."
+  );
+}
 
+console.log("M-PESA request accepted:", paymentData);
 if (!paymentData || paymentData.error || !paymentData.success) {
   throw new Error(
     paymentData?.details ||
