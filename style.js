@@ -784,15 +784,27 @@ if (!/^(?:(?:\+?254|0)(?:7|1)\d{8})$/.test(normalizedPhone)) {
       and amount before initiating the M-Pesa request.
     */
 
-    const { data: order, error: orderError } = await db
-      .from("orders")
-      .insert({
-        user_id: user.id,
-        total_amount: amount,
-        status: "pending"
-      })
-      .select("id")
-      .single();
+    
+const customerName =
+  user.user_metadata?.full_name ||
+  user.user_metadata?.name ||
+  user.email?.split("@")[0] ||
+  "Customer";
+
+const customerEmail = user.email || "";
+
+const { data: order, error: orderError } = await db
+  .from("orders")
+  .insert({
+    user_id: user.id,
+    customer_name: customerName,
+    customer_email: customerEmail,
+    total_amount: amount,
+    status: "pending"
+  })
+  .select("id")
+  .single();
+
 
     if (orderError) throw orderError;
 
