@@ -963,6 +963,95 @@ if (yearElement) {
 }
 
 
+/* MY ORDERS BUTTONS */
+
+const myOrdersBtn = document.getElementById("myOrdersBtn");
+const myOrdersSection = document.getElementById("myOrdersSection");
+const backToShopBtn = document.getElementById("backToShopBtn");
+
+myOrdersBtn?.addEventListener("click", async () => {
+  if (!db) {
+    showToast("Database connection is unavailable.");
+    return;
+  }
+
+  const { data, error } = await db.auth.getSession();
+
+  if (error || !data.session?.user) {
+    setAccountMode(false);
+    openOverlay("accountOverlay");
+    showToast("Please log in to view your orders.");
+    return;
+  }
+
+  myOrdersSection?.classList.remove("hidden");
+  document.getElementById("shop")?.classList.add("hidden");
+  myOrdersSection?.scrollIntoView({ behavior: "smooth" });
+
+  loadMyOrders(data.session.user.id);
+});
+
+backToShopBtn?.addEventListener("click", () => {
+  myOrdersSection?.classList.add("hidden");
+  document.getElementById("shop")?.classList.remove("hidden");
+  document.getElementById("shop")?.scrollIntoView({
+    behavior: "smooth"
+  });
+});
+
+async function loadMyOrders(userId) {
+  const list = document.getElementById("myOrdersList");
+
+  if (!list) return;
+
+  list.textContent = "Loading your orders...";
+
+  const { data, error } = await db
+    .from("orders")
+    .select("id, total_amount, status, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("My Orders error:", error);
+    list.textContent =
+      "Could not load your orders. Please try again.";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    list.textContent = "You have not placed any orders yet.";
+    return;
+  }
+
+  list.replaceChildren();
+
+  data.forEach(order => {
+    const card = document.createElement("div");
+    card.className = "cart-item";
+
+    const details = document.createElement("div");
+
+    const title = document.createElement("h3");
+    title.textContent = "Order #" + order.id;
+
+    const total = document.createElement("p");
+    total.textContent = "Total: " + formatPrice(order.total_amount);
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + (order.status || "pending");
+
+    const date = document.createElement("p");
+    date.textContent = order.created_at
+      ? new Date(order.created_at).toLocaleString("en-KE")
+      : "";
+
+    details.append(title, total, status, date);
+    card.append(details);
+    list.append(card);
+  });
+}
+
 /* 16. START WEBSITE */
 
 displayProducts();
