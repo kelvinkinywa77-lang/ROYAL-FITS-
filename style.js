@@ -913,7 +913,7 @@ if (paymentError) {
   );
 }
 
-console.log("M-PESA request accepted:", paymentData);
+
 if (!paymentData || paymentData.error || !paymentData.success) {
   throw new Error(
     paymentData?.details ||
@@ -922,7 +922,7 @@ if (!paymentData || paymentData.error || !paymentData.success) {
     "The M-PESA request was not accepted."
   );
 }
-
+console.log("M-PESA request accepted:", paymentData);
 setMessage(
   "Payment request accepted. Check your phone for the M-PESA prompt. Your order will remain pending until payment is confirmed."
 );
