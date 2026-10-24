@@ -999,57 +999,151 @@ backToShopBtn?.addEventListener("click", () => {
   });
 });
 
+
 async function loadMyOrders(userId) {
   const list = document.getElementById("myOrdersList");
 
-  if (!list) return;
+  if (!list || !db) return;
 
   list.textContent = "Loading your orders...";
 
-  const { data, error } = await db
-    .from("orders")
-    .select("id, total_amount, status, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  try {
+    // 1. Load the customer's orders.
+    const { data: orders, error: ordersError } = await db
+      .from("orders")
+      .select("id, total_amount, status, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("My Orders error:", error);
+    if (ordersError) throw ordersError;
+
+    if (!orders || orders.length === 0) {
+      list.textContent = "You have not placed any orders yet.";
+      return;
+    }
+
+    // 2. Load all items belonging to those orders.
+    const orderIds = orders.map(order => order.id);
+
+    const { data: items, error: itemsError } = await db
+      .from("order_items")
+      .select(
+        "order_id, product_id, product_name, quantity, price, image_url"
+      )
+      .in("order_id", orderIds);
+
+    if (itemsError) throw itemsError;
+
+    // 3. Group items by their order ID.
+    const itemsByOrder = new Map();
+
+    (items || []).forEach(item => {
+      const key = String(item.order_id);
+
+      if (!itemsByOrder.has(key)) {
+        itemsByOrder.set(key, []);
+      }
+
+      itemsByOrder.get(key).push(item);
+    });
+
+    // 4. Display the orders and their products.
+    list.replaceChildren();
+
+    orders.forEach(order => {
+      const card = document.createElement("div");
+      card.className = "order-card";
+
+      const title = document.createElement("h3");
+      title.textContent = "Order #" + order.id;
+
+      const total = document.createElement("p");
+      total.textContent =
+        "Total: " + formatPrice(order.total_amount);
+
+      const status = document.createElement("p");
+      status.textContent =
+        "Status: " + (order.status || "pending");
+
+      const date = document.createElement("p");
+      date.textContent = order.created_at
+        ? new Date(order.created_at).toLocaleString("en-KE")
+        : "";
+
+      card.append(title, total, status, date);
+
+      const heading = document.createElement("h4");
+      heading.textContent = "Items in this order";
+      card.appendChild(heading);
+
+      const orderItems = itemsByOrder.get(String(order.id)) || [];
+
+      if (orderItems.length === 0) {
+        const empty = document.createElement("p");
+        empty.textContent = "No items found for this order.";
+        card.appendChild(empty);
+      }
+
+      orderItems.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "cart-item";
+
+        const image = document.createElement("img");
+        image.className = "cart-image";
+        image.alt = item.product_name || "Product image";
+
+        if (item.image_url) {
+          image.src = item.image_url;
+          image.onerror = () => {
+            image.style.display = "none";
+          };
+        } else {
+          image.style.display = "none";
+        }
+
+        const details = document.createElement("div");
+        details.className = "cart-item-details";
+
+        const name = document.createElement("h4");
+        name.textContent =
+          item.product_name || ("Product #" + item.product_id);
+
+        const quantity = Number(item.quantity || 0);
+        const price = Number(item.price || 0);
+
+        const priceLine = document.createElement("p");
+        priceLine.textContent =
+          "Unit price: " + formatPrice(price);
+
+        const quantityLine = document.createElement("p");
+        quantityLine.textContent = "Quantity: " + quantity;
+
+        const subtotalLine = document.createElement("p");
+        subtotalLine.textContent =
+          "Subtotal: " + formatPrice(price * quantity);
+
+        details.append(
+          name,
+          priceLine,
+          quantityLine,
+          subtotalLine
+        );
+
+        row.append(image, details);
+        card.appendChild(row);
+      });
+
+      list.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error("My Orders loading error:", error);
+
     list.textContent =
-      "Could not load your orders. Please try again.";
-    return;
+      "Could not load your order items. Please try again.";
+
+    showToast("Could not load order details. Check the browser console.");
   }
-
-  if (!data || data.length === 0) {
-    list.textContent = "You have not placed any orders yet.";
-    return;
-  }
-
-  list.replaceChildren();
-
-  data.forEach(order => {
-    const card = document.createElement("div");
-    card.className = "cart-item";
-
-    const details = document.createElement("div");
-
-    const title = document.createElement("h3");
-    title.textContent = "Order #" + order.id;
-
-    const total = document.createElement("p");
-    total.textContent = "Total: " + formatPrice(order.total_amount);
-
-    const status = document.createElement("p");
-    status.textContent = "Status: " + (order.status || "pending");
-
-    const date = document.createElement("p");
-    date.textContent = order.created_at
-      ? new Date(order.created_at).toLocaleString("en-KE")
-      : "";
-
-    details.append(title, total, status, date);
-    card.append(details);
-    list.append(card);
-  });
 }
 
 /* 16. START WEBSITE */
