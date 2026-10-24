@@ -1009,11 +1009,12 @@ async function loadMyOrders(userId) {
 
   try {
     // 1. Load the customer's orders.
-    const { data: orders, error: ordersError } = await db
-      .from("orders")
-      .select("id, total_amount, status, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+    
+const { data: orders, error: ordersError } = await db
+  .from("orders")
+  .select("id, total_amount, mpesa_status, delivery_status, created_at")
+  .eq("user_id", userId)
+  .order("created_at", { ascending: false });
 
     if (ordersError) throw ordersError;
 
@@ -1061,9 +1062,28 @@ async function loadMyOrders(userId) {
       total.textContent =
         "Total: " + formatPrice(order.total_amount);
 
-      const status = document.createElement("p");
-      status.textContent =
-        "Status: " + (order.status || "pending");
+      
+const status = document.createElement("p");
+
+const paymentStatus = String(
+  order.mpesa_status || "pending"
+).toLowerCase();
+
+let paymentLabel;
+
+if (["paid", "successful", "success"].includes(paymentStatus)) {
+  paymentLabel = "Paid";
+} else if (["failed", "cancelled", "canceled"].includes(paymentStatus)) {
+  paymentLabel = "Payment Failed";
+} else {
+  paymentLabel = "Pending Payment";
+}
+
+status.textContent = "Payment: " + paymentLabel;
+
+const delivery = document.createElement("p");
+delivery.textContent =
+  "Delivery: " + (order.delivery_status || "pending");
 
       const date = document.createElement("p");
       date.textContent = order.created_at
