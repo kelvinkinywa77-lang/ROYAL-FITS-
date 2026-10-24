@@ -859,43 +859,51 @@ console.log("Order items saved successfully:", savedItems);
 
     setMessage("Sending M-PESA payment request. Please wait...");
 
-    const { data: paymentData, error: paymentError } =
+   
+const { data: paymentData, error: paymentError } =
   await db.functions.invoke("initiate-stk-push", {
     body: {
       phone: normalizedPhone,
-      amount: amount,
-      order_id: order.id
+      amount: Math.round(amount),
+      orderId: order.id
     }
   });
 
-console.log("M-PESA function response:", paymentData);
-console.log("M-PESA function error:", paymentError);
-
 if (paymentError) {
+  console.error("M-PESA function error:", paymentError);
+
+  if (paymentError.context) {
+    try {
+      console.error(
+        "M-PESA error details:",
+        await paymentError.context.clone().json()
+      );
+    } catch {
+      console.error("Could not read the function error response.");
+    }
+  }
+
   throw new Error(
-    paymentError.message ||
-    "Could not contact the M-PESA payment service."
+    "M-PESA request failed. Check the browser Console for details."
   );
 }
 
-if (!paymentData || paymentData.error) {
+console.log("M-PESA function response:", paymentData);
+
+if (!paymentData || paymentData.error || !paymentData.success) {
   throw new Error(
+    paymentData?.details ||
     paymentData?.error ||
     paymentData?.message ||
     "The M-PESA request was not accepted."
   );
 }
-    // Only clear the cart after the function responds successfully.
-    // This does not mean the customer has paid yet.
-    cart = [];
-    updateCart();
 
-    setMessage(
-      paymentData.message ||
-      "M-PESA request submitted. Check your phone if a prompt is issued. Your order remains pending until payment is confirmed."
-    );
+setMessage(
+  "Payment request accepted. Check your phone for the M-PESA prompt. Your order will remain pending until payment is confirmed."
+);
 
-    showToast("M-PESA request submitted. Await payment confirmation.");
+showToast("M-PESA request accepted. Await payment confirmation.");
 
     /*
       Do not automatically delete an order here:
