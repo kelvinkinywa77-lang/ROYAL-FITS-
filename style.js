@@ -913,14 +913,6 @@ if (paymentError) {
   );
 }
 
-if (!paymentData || paymentData.error) {
-  throw new Error(
-    paymentData?.error ||
-    paymentData?.message ||
-    "The M-PESA request was not accepted."
-  );
-}
-
 console.log("M-PESA request accepted:", paymentData);
 if (!paymentData || paymentData.error || !paymentData.success) {
   throw new Error(
