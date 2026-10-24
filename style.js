@@ -943,6 +943,15 @@ showToast("M-PESA request accepted. Await payment confirmation.");
       if the browser did not receive the response.
     */
 
+  
+  } catch (error) {
+    console.error("Checkout error:", error);
+
+    const errorMessage =
+      error?.message || "Something went wrong during checkout.";
+
+    setMessage("Order failed: " + errorMessage);
+    showToast("Checkout failed. Check the message on the cart.");
   } finally {
     checkoutBusy = false;
 
