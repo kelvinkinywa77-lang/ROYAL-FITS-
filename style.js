@@ -794,16 +794,20 @@ const customerName =
 const customerEmail = user.email || "";
 
 const { data: order, error: orderError } = await db
-  .from("orders")
-  .insert({
-    user_id: user.id,
-    customer_name: customerName,
-    customer_email: customerEmail,
-    total_amount: amount,
-    status: "pending"
-  })
-  .select("id")
-  .single();
+ 
+.from("orders")
+.insert({
+  user_id: user.id,
+  customer_name: customerName,
+  customer_email: customerEmail,
+  phone: normalizedPhone,
+  total_amount: amount,
+  mpesa_status: "pending",
+  delivery_status: "pending"
+})
+.select("id")
+.single();
+ 
 
 
     if (orderError) throw orderError;
