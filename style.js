@@ -1016,7 +1016,7 @@ async function loadMyOrders(userId) {
     
 const { data: orders, error: ordersError } = await db
   .from("orders")
-  .select("id, total_amount, mpesa_status, delivery_status, created_at")
+  .select("id, total_amount, payment_status, delivery_status, created_at")
   .eq("user_id", userId)
   .order("created_at", { ascending: false });
 
