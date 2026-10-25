@@ -1070,8 +1070,8 @@ const { data: orders, error: ordersError } = await db
 const status = document.createElement("p");
 
 const paymentStatus = String(
-  order.mpesa_status || "pending"
-).toLowerCase();
+  order.payment_status || "pending"
+).trim().toLowerCase();
 
 let paymentLabel;
 
