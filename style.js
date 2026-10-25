@@ -802,8 +802,8 @@ const { data: order, error: orderError } = await db
   customer_email: customerEmail,
   phone: normalizedPhone,
   total_amount: amount,
-  mpesa_status: "pending",
-  delivery_status: "pending"
+  payment_status: "pending",
+delivery_status: "pending"
 })
 .select("id")
 .single();
