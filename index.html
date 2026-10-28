@@ -492,9 +492,28 @@
   </div>
   <!-- END ACCOUNT WINDOW -->
 
-  <!-- Load Supabase BEFORE style.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="style.js"></script>
+ 
+<!-- Push notifications -->
+<section id="pushNotificationSection"
+         class="container"
+         style="padding:20px 0;text-align:center;">
 
-</body>
-</html>
+  <h2>Stay Updated 👑</h2>
+
+  <p id="pushNotificationStatus" role="status">
+    Enable notifications for order and delivery updates.
+  </p>
+
+  <button
+    id="enablePushNotifications"
+    class="primary-btn"
+    type="button">
+    🔔 Enable Notifications
+  </button>
+
+</section>
+
+<!-- Load Supabase BEFORE style.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="style.js"></script>
+<script src="push.js"></script>
