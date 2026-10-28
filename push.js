@@ -14,7 +14,7 @@
     "sb_publishable_iUUvMivOvVBbk4XvCCDWtQ_iOWSra5g";
 
   // Replace this placeholder with your generated PUBLIC VAPID key.
-  const VAPID_PUBLIC_KEY = "PASTE_PUBLIC_VAPID_KEY_HERE";
+  const VAPID_PUBLIC_KEY = "BLGAAyhmAZnSDZ8GIuE8KXP6cg1MidBQSfURaIW1JSUE0BBDQbqCdfe6W3JZbUqWkPXGkXvv8TmAPFJU0wZjrJQ";
 
   const db = window.supabase.createClient(
     SUPABASE_URL,
@@ -52,7 +52,7 @@
 
       if (
         !VAPID_PUBLIC_KEY ||
-        VAPID_PUBLIC_KEY === "BFLLHBvj-6nkfVjadjzsp3YnIrrq9fyx42O1YnsA_KYnZXbzgqXWRTG-rbO6k3ZxfTSCjBRONToC08S_0icmeTc"
+        VAPID_PUBLIC_KEY === "BLGAAyhmAZnSDZ8GIuE8KXP6cg1MidBQSfURaIW1JSUE0BBDQbqCdfe6W3JZbUqWkPXGkXvv8TmAPFJU0wZjrJQ"
       ) {
         throw new Error(
           "Add your generated PUBLIC VAPID key to push.js first."
