@@ -15,13 +15,13 @@
   const SUPABASE_KEY =
     "sb_publishable_iUUvMivOvVBbk4XvCCDWtQ_iOWSra5g";
 
-  // Your generated PUBLIC VAPID key.
-  // Never put your private VAPID key in this file.
+  // Public VAPID key only. Never put the private key here.
   const VAPID_PUBLIC_KEY =
     "BLGAAyhmAZnSDZ8GIuE8KXP6cg1MidBQSfURaIW1JSUE0BBDQbqCdfe6W3JZbUqWkPXGkXvv8TmAPFJU0wZjrJQ";
 
   if (!window.supabase) {
-    status.textContent = "Supabase could not load. Reload the website.";
+    status.textContent =
+      "Supabase could not load. Reload the website.";
     return;
   }
 
@@ -30,10 +30,10 @@
     SUPABASE_KEY
   );
 
-  function decodeVapidKey(base64String) {
-    const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  function decodeVapidKey(key) {
+    const padding = "=".repeat((4 - key.length % 4) % 4);
 
-    const base64 = (base64String + padding)
+    const base64 = (key + padding)
       .replace(/-/g, "+")
       .replace(/_/g, "/");
 
@@ -57,11 +57,9 @@
 
     const decoded = decodeVapidKey(key);
 
-    // An uncompressed P-256 public key must be 65 bytes
-    // and start with 0x04.
     if (decoded.length !== 65 || decoded[0] !== 4) {
       throw new Error(
-        "The public VAPID key is invalid. Check the full key from your generator."
+        "The public VAPID key is invalid. Check the complete key."
       );
     }
 
@@ -109,7 +107,7 @@
 
       if (permission !== "granted") {
         throw new Error(
-          "Notifications are blocked. Allow them in your browser settings."
+          "Notifications are blocked. Allow them in browser settings."
         );
       }
 
@@ -121,25 +119,24 @@
       let subscription =
         await registration.pushManager.getSubscription();
 
+      // Recreate an old subscription if its VAPID key differs.
       if (subscription) {
         const existingKey =
           subscription.options.applicationServerKey;
 
+        let keysMatch = false;
+
         if (existingKey) {
           const existingBytes = new Uint8Array(existingKey);
-          const currentBytes = applicationServerKey;
 
-          const keysMatch =
-            existingBytes.length === currentBytes.length &&
+          keysMatch =
+            existingBytes.length === applicationServerKey.length &&
             existingBytes.every(
-              (byte, index) => byte === currentBytes[index]
+              (byte, index) => byte === applicationServerKey[index]
             );
+        }
 
-          if (!keysMatch) {
-            await subscription.unsubscribe();
-            subscription = null;
-          }
-        } else {
+        if (!keysMatch) {
           await subscription.unsubscribe();
           subscription = null;
         }
@@ -168,13 +165,12 @@
 
       const row = {
         user_id: userData.user.id,
+        role: "customer",
         endpoint: subscriptionData.endpoint,
         p256dh: subscriptionData.keys.p256dh,
         auth_key: subscriptionData.keys.auth
       };
 
-      // Upsert also handles a subscription already stored
-      // for this browser endpoint.
       const { error: saveError } = await db
         .from("push_subscriptions")
         .upsert(row, { onConflict: "endpoint" });
@@ -184,7 +180,7 @@
       }
 
       status.textContent =
-        "Notifications enabled for this signed-in account.";
+        "Notifications enabled for your signed-in account.";
 
       button.textContent = "✓ Notifications Enabled";
 
