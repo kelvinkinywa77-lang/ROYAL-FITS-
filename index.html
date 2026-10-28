@@ -6,15 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Royal Fits Boutique254 | Fashion Store</title>
-
   <meta name="description" content="Shop stylish fashion at Royal Fits Boutique254 in Nairobi, Kenya.">
-
   <meta name="theme-color" content="#111111">
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- WhatsApp floating button styling -->
   <style>
+    /* WhatsApp floating button */
     .royal-whatsapp {
       position: fixed;
       right: 20px;
@@ -54,6 +52,57 @@
       outline-offset: 4px;
     }
 
+    /* Notification bell beside Cart */
+    .notification-bell {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      margin-left: 4px;
+      padding: 0;
+      border: 1px solid #d4af37;
+      border-radius: 50%;
+      background: #111111;
+      color: #d4af37;
+      font-size: 21px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease,
+                  transform 0.2s ease;
+    }
+
+    .notification-bell:hover {
+      background: #d4af37;
+      color: #111111;
+      transform: scale(1.05);
+    }
+
+    .notification-bell:focus-visible {
+      outline: 2px solid #d4af37;
+      outline-offset: 3px;
+    }
+
+    .notification-bell:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+
+    /* Screen-reader-only notification status */
+    .push-status-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     @media (max-width: 480px) {
       .royal-whatsapp {
         right: 14px;
@@ -63,6 +112,13 @@
 
       .royal-whatsapp .whatsapp-label {
         display: none;
+      }
+
+      .notification-bell {
+        width: 38px;
+        height: 38px;
+        margin-left: 3px;
+        font-size: 19px;
       }
     }
   </style>
@@ -101,6 +157,22 @@
     <button class="header-btn" id="cartBtn" type="button">
       🛍 Cart (<span id="cartCount">0</span>)
     </button>
+
+    <!-- Notification bell beside Cart -->
+    <button
+      id="enablePushNotifications"
+      class="notification-bell"
+      type="button"
+      aria-label="Enable phone notifications"
+      title="Enable phone notifications"
+    >🔔</button>
+
+    <p
+      id="pushNotificationStatus"
+      class="push-status-hidden"
+      role="status"
+      aria-live="polite"
+    >Enable notifications for order and delivery updates.</p>
   </header>
 
   <nav class="navigation" id="categories">
@@ -129,7 +201,6 @@
     <section class="hero">
       <div class="hero-content">
         <p class="eyebrow">YOUR STYLE. YOUR ROYALTY.</p>
-
         <h1>Fashion that makes you feel royal.</h1>
 
         <p>
@@ -195,7 +266,6 @@
 
   <!-- MY ORDERS -->
   <section id="myOrdersSection" class="container my-orders-section hidden">
-
     <div class="section-heading">
       <div>
         <h2>My Orders</h2>
@@ -210,7 +280,6 @@
     <div id="myOrdersList">
       <p>Your orders will appear here after you place an order.</p>
     </div>
-
   </section>
 
   <!-- FOOTER -->
@@ -226,33 +295,27 @@
         <p>Your fashion destination in Nairobi, Kenya.</p>
       </div>
 
-     
+      <div>
+        <h3>QUICK LINKS</h3>
 
-<div>
-  <h3>QUICK LINKS</h3>
+        <a href="#shop">Shop products</a>
 
-  <a href="#shop">Shop products</a>
+        <button id="footerAccount" type="button">
+          My account
+        </button>
 
-  <button id="footerAccount" type="button">
-    My account
-  </button>
+        <a
+          href="https://www.instagram.com/mrreveler/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >📸 Instagram</a>
 
-  <a
-    href="https://www.instagram.com/mrreveler/"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    📸 Instagram
-  </a>
-
-  <a
-    href="https://www.tiktok.com/@dwf.kevo254"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    🎵 TikTok
-  </a>
-</div>
+        <a
+          href="https://www.tiktok.com/@dwf.kevo254"
+          target="_blank"
+          rel="noopener noreferrer"
+        >🎵 TikTok</a>
+      </div>
 
       <div>
         <h3>CUSTOMER CARE</h3>
@@ -260,15 +323,12 @@
         <p>Phone: 0180732821</p>
         <p>Email: kelvinkinywa77@gmail.com</p>
 
-        <!-- WhatsApp contact link in footer -->
         <p>
           <a
             href="https://wa.me/254180732821?text=Hello%20ROYAL%20FITS%20Boutique254!%20I%27d%20like%20to%20ask%20about%20your%20products.."
             target="_blank"
             rel="noopener noreferrer"
-          >
-            Chat with us on WhatsApp
-          </a>
+          >Chat with us on WhatsApp</a>
         </p>
       </div>
 
@@ -353,24 +413,19 @@
         class="primary-btn full-width"
         id="checkoutBtn"
         type="button"
-      >
-        PLACE ORDER &amp; PAY WITH M-PESA
-      </button>
+      >PLACE ORDER &amp; PAY WITH M-PESA</button>
 
       <button
         class="secondary-btn full-width"
         data-close="cartOverlay"
         type="button"
-      >
-        Continue shopping
-      </button>
+      >Continue shopping</button>
 
     </section>
   </div>
 
   <!-- PRODUCT IMAGE POPUP -->
   <div id="imagePopup" class="image-popup" onclick="closeImage()">
-
     <button
       class="close-popup"
       aria-label="Close image"
@@ -403,12 +458,10 @@
       </div>
 
       <form id="accountForm">
-
         <p id="formError" role="alert"></p>
         <p id="accountStatus" role="status"></p>
 
         <label for="email">Email address</label>
-
         <input
           id="email"
           type="email"
@@ -418,9 +471,7 @@
         >
 
         <div id="registerFields" class="hidden">
-
           <label for="fullName">Full name</label>
-
           <input
             id="fullName"
             type="text"
@@ -429,18 +480,15 @@
           >
 
           <label for="phone">Phone number</label>
-
           <input
             id="phone"
             type="tel"
             autocomplete="tel"
             placeholder="0712345678"
           >
-
         </div>
 
         <label for="password">Password</label>
-
         <input
           id="password"
           type="password"
@@ -461,59 +509,34 @@
 
         <p>
           <span id="switchPrompt">New customer?</span>
-
           <button
             id="switchAccount"
             type="button"
             class="text-btn"
-          >
-            Register here
-          </button>
+          >Register here</button>
         </p>
 
         <button
           id="resetPasswordBtn"
           type="button"
           class="text-btn"
-        >
-          Forgot password?
-        </button>
+        >Forgot password?</button>
 
         <button
           id="logoutBtn"
           type="button"
           class="secondary-btn full-width hidden"
-        >
-          LOG OUT
-        </button>
-
+        >LOG OUT</button>
       </form>
+
     </section>
   </div>
   <!-- END ACCOUNT WINDOW -->
 
- 
-<!-- Push notifications -->
-<section id="pushNotificationSection"
-         class="container"
-         style="padding:20px 0;text-align:center;">
+  <!-- Load Supabase BEFORE the store and notification scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="style.js"></script>
+  <script src="push.js"></script>
 
-  <h2>Stay Updated 👑</h2>
-
-  <p id="pushNotificationStatus" role="status">
-    Enable notifications for order and delivery updates.
-  </p>
-
-  <button
-    id="enablePushNotifications"
-    class="primary-btn"
-    type="button">
-    🔔 Enable Notifications
-  </button>
-
-</section>
-
-<!-- Load Supabase BEFORE style.js -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="style.js"></script>
-<script src="push.js"></script>
+</body>
+</html>
