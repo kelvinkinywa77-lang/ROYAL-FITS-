@@ -1,540 +1,493 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="google-adsense-account" content="ca-pub-3421896542761248">
-  <title>Royal Fits Boutique254 | Fashion Store</title>
-  <meta name="description" content="Shop stylish fashion at Royal Fits Boutique254 in Nairobi, Kenya.">
-  <meta name="theme-color" content="#111111"
-    
- link rel="stylesheet" href="style.css">    <style>  
- 
-  /* WhatsApp floating button */
-    .royal-whatsapp {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 18px;
-      border-radius: 50px;
-      background: #25D366;
-      color: #ffffff;
-      text-decoration: none;
-      font-family: Arial, sans-serif;
-      font-size: 15px;
-      font-weight: bold;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-
-    .royal-whatsapp:hover {
-      background: #128C7E;
-      color: #ffffff;
-      transform: translateY(-2px);
-    }
-
-    .royal-whatsapp svg {
-      width: 29px;
-      height: 29px;
-      flex-shrink: 0;
-      display: block;
-    }
-
-    .royal-whatsapp:focus-visible {
-      outline: 3px solid #111111;
-      outline-offset: 4px;
-    }
-
-    /* Notification bell beside Cart */
-    .notification-bell {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      flex-shrink: 0;
-      width: 42px;
-      height: 42px;
-      margin-left: 4px;
-      padding: 0;
-      border: 1px solid #d4af37;
-      border-radius: 50%;
-      background: #111111;
-      color: #d4af37;
-      font-size: 21px;
-      line-height: 1;
-      cursor: pointer;
-      transition: background 0.2s ease, color 0.2s ease,
-                  transform 0.2s ease;
-    }
-
-    .notification-bell:hover {
-      background: #d4af37;
-      color: #111111;
-      transform: scale(1.05);
-    }
-
-    .notification-bell:focus-visible {
-      outline: 2px solid #d4af37;
-      outline-offset: 3px;
-    }
-
-    .notification-bell:disabled {
-      opacity: 0.65;
-      cursor: wait;
-    }
-
-    /* Screen-reader-only notification status */
-    .push-status-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    @media (max-width: 480px) {
-      .royal-whatsapp {
-        right: 14px;
-        bottom: 14px;
-        padding: 12px;
-      }
-
-      .royal-whatsapp .whatsapp-label {
-        display: none;
-      }
-
-      .notification-bell {
-        width: 38px;
-        height: 38px;
-        margin-left: 3px;
-        font-size: 19px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="topbar">
-    Welcome to Royal Fits Boutique254
-    <span>📍 Nairobi, Kenya | Prices in KSh</span>
-  </div>
-
-  <header class="header">
-    <a class="brand" href="#">
-      <div>ROYAL FITS <span>254</span></div>
-      <small>B O U T I Q U E</small>
-    </a>
-
-    <form id="searchForm" class="search">
-      <input
-        id="searchInput"
-        type="search"
-        placeholder="Search dresses, shoes, bags..."
-      >
-      <button type="submit">Search</button>
-    </form>
-
-    <button class="header-btn" id="accountBtn" type="button">
-      👤 Account
-    </button>
-
-    <button class="header-btn" id="myOrdersBtn" type="button">
-      📦 My Orders
-    </button>
-
-    <button class="header-btn" id="cartBtn" type="button">
-      🛍 Cart (<span id="cartCount">0</span>)
-    </button>
-
-    <!-- Notification bell beside Cart -->
-    <button
-      id="enablePushNotifications"
-      class="notification-bell"
-      type="button"
-      aria-label="Enable phone notifications"
-      title="Enable phone notifications"
-    >🔔</button>
-
-    <p
-      id="pushNotificationStatus"
-      class="push-status-hidden"
-      role="status"
-      aria-live="polite"
-    >Enable notifications for order and delivery updates.</p>
-  </header>
-
-  <nav class="navigation" id="categories">
-    <button class="category active" data-category="All" type="button">
-      All Products
-    </button>
-    <button class="category" data-category="Women" type="button">
-      Women
-    </button>
-    <button class="category" data-category="Men" type="button">
-      Men
-    </button>
-    <button class="category" data-category="Shoes" type="button">
-      Shoes
-    </button>
-    <button class="category" data-category="Bags" type="button">
-      Bags
-    </button>
-    <button class="category" data-category="Accessories" type="button">
-      Accessories
-    </button>
-  </nav>
-
-  <main class="container">
-
-    <section class="hero">
-      <div class="hero-content">
-        <p class="eyebrow">YOUR STYLE. YOUR ROYALTY.</p>
-        <h1>Fashion that makes you feel royal.</h1>
-
-        <p>
-          Discover beautiful clothing, shoes, handbags and accessories
-          at affordable prices.
-        </p>
-
-        <button class="gold-btn" id="shopBtn" type="button">
-          SHOP COLLECTION →
-        </button>
-      </div>
-
-      <div class="crown">👑</div>
-    </section>
-
-    <section class="benefits">
-      <div>
-        🚚 <strong>Nairobi Delivery</strong>
-        <small>Delivery options available</small>
-      </div>
-
-      <div>
-        💳 <strong>M-Pesa Payments</strong>
-        <small>Pay securely through M-Pesa</small>
-      </div>
-
-      <div>
-        ✨ <strong>Fashion Finds</strong>
-        <small>Styles for every occasion</small>
-      </div>
-
-      <div>
-        🔒 <strong>Customer Accounts</strong>
-        <small>Secure customer sign-in</small>
-      </div>
-    </section>
-
-    <section id="shop">
-      <div class="section-heading">
-        <div>
-          <h2>Our Fashion Collection</h2>
-          <p>Find your next favourite look.</p>
-        </div>
-
-        <span id="productCount"></span>
-      </div>
-
-      <div class="products" id="productGrid"></div>
-    </section>
-
-    <section class="promo">
-      <div>
-        <h2>Discover your signature style 👑</h2>
-        <p>Join Royal Fits Boutique254 today.</p>
-      </div>
-
-      <button class="gold-btn" id="registerBtn" type="button">
-        CREATE ACCOUNT
-      </button>
-    </section>
-
-  </main>
-
-  <!-- MY ORDERS -->
-  <section id="myOrdersSection" class="container my-orders-section hidden">
-    <div class="section-heading">
-      <div>
-        <h2>My Orders</h2>
-        <p>View your purchases and payment status.</p>
-      </div>
-
-      <button type="button" id="backToShopBtn" class="primary-btn">
-        Back to Shop
-      </button>
-    </div>
-
-    <div id="myOrdersList">
-      <p>Your orders will appear here after you place an order.</p>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-grid">
-
-      <div>
-        <a class="brand footer-brand" href="#">
-          <div>ROYAL FITS <span>254</span></div>
-          <small>B O U T I Q U E</small>
-        </a>
-
-        <p>Your fashion destination in Nairobi, Kenya.</p>
-      </div>
-
-      <div>
-        <h3>QUICK LINKS</h3>
-
-        <a href="#shop">Shop products</a>
-
-        <button id="footerAccount" type="button">
-          My account
-        </button>
-
-        <a
-          href="https://www.instagram.com/mrreveler/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >📸 Instagram</a>
-
-        <a
-          href="https://www.tiktok.com/@dwf.kevo254"
-          target="_blank"
-          rel="noopener noreferrer"
-        >🎵 TikTok</a>
-      </div>
-
-      <div>
-        <h3>CUSTOMER CARE</h3>
-        <p>Delivery in Nairobi</p>
-        <p>Phone: 0180732821</p>
-        <p>Email: kelvinkinywa77@gmail.com</p>
-
-        <p>
-          <a
-            href="https://wa.me/254180732821?text=Hello%20ROYAL%20FITS%20Boutique254!%20I%27d%20like%20to%20ask%20about%20your%20products.."
-            target="_blank"
-            rel="noopener noreferrer"
-          >Chat with us on WhatsApp</a>
-        </p>
-      </div>
-
-    </div>
-
-    <p class="copyright">
-      © <span id="year"></span> Royal Fits Boutique254. All rights reserved.
-    </p>
-  </footer>
-
-  <!-- FLOATING WHATSAPP BUTTON -->
-  <a
-    href="https://wa.me/254180732821?text=Hello%20ROYAL%20FITS%20Boutique254!%20I%27d%20like%20to%20ask%20about%20your%20products.."
-    class="royal-whatsapp"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Chat with ROYAL FITS Boutique254 on WhatsApp"
-    title="Chat with us on WhatsApp"
-  >
-    <svg
-      viewBox="0 0 32 32"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        fill="currentColor"
-        d="M16 .8A15 15 0 0 0 3.1 23.5L1 31l7.7-2A15.1 15.1 0 1 0 16 .8Zm0 27.5a12.3 12.3 0 0 1-6.3-1.7l-.5-.3-4.6 1.2 1.2-4.5-.3-.5A12.3 12.3 0 1 1 16 28.3Zm6.8-9.2c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2l-1.2 1.4c-.2.2-.4.3-.8.1a10 10 0 0 1-3-1.8 11.4 11.4 0 0 1-2.1-2.6c-.2-.4 0-.6.2-.8l.6-.7.4-.7c.1-.2 0-.5 0-.7l-1.2-2.8c-.3-.7-.7-.6-.9-.6h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.3 3.6 1.5 3.8c.2.3 2.6 4 6.3 5.6.9.4 1.6.6 2.1.7.9.3 1.7.2 2.3.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.2-.4-.3-.8-.5Z"
-      />
-    </svg>
-
-    <span class="whatsapp-label">Chat with us</span>
-  </a>
-
-  <!-- SHOPPING CART -->
-  <div class="overlay hidden" id="cartOverlay">
-    <section class="panel">
-
-      <div class="panel-heading">
-        <h2>Your Shopping Cart</h2>
-
-        <button
-          class="close-btn"
-          data-close="cartOverlay"
-          type="button"
-          aria-label="Close cart"
-        >×</button>
-      </div>
-
-      <div id="cartItems">
-        <p>Your cart is empty.</p>
-      </div>
-
-      <div class="cart-total">
-        <span>Total</span>
-        <strong id="cartTotal">KSh 0</strong>
-      </div>
-
-      <p class="muted">
-        Delivery charges will be confirmed before an order is completed.
-      </p>
-
-      <div class="mpesa-checkout">
-        <label for="mpesa-phone">M-Pesa phone number</label>
-
-        <input
-          id="mpesa-phone"
-          type="tel"
-          placeholder="0712345678"
-          autocomplete="tel"
-          inputmode="tel"
-          required
-        >
-
-        <p class="muted">
-          Your payment amount will be calculated from your cart total.
-        </p>
-
-        <p id="mpesa-message" role="status" aria-live="polite"></p>
-      </div>
-
-      <button
-        class="primary-btn full-width"
-        id="checkoutBtn"
-        type="button"
-      >PLACE ORDER &amp; PAY WITH M-PESA</button>
-
-      <button
-        class="secondary-btn full-width"
-        data-close="cartOverlay"
-        type="button"
-      >Continue shopping</button>
-
-    </section>
-  </div>
-
-  <!-- PRODUCT IMAGE POPUP -->
-  <div id="imagePopup" class="image-popup" onclick="closeImage()">
-    <button
-      class="close-popup"
-      aria-label="Close image"
-      onclick="closeImage()"
-    >&times;</button>
-
-    <img
-      id="popupImage"
-      src=""
-      alt="Product preview"
-      onclick="event.stopPropagation()"
-    >
-
-    <p id="popupName"></p>
-  </div>
-
-  <!-- ACCOUNT LOGIN AND REGISTRATION WINDOW -->
-  <div class="overlay hidden" id="accountOverlay">
-    <section class="panel">
-
-      <div class="panel-heading">
-        <h2 id="accountTitle">Customer Login</h2>
-
-        <button
-          class="close-btn"
-          data-close="accountOverlay"
-          type="button"
-          aria-label="Close account window"
-        >×</button>
-      </div>
-
-      <form id="accountForm">
-        <p id="formError" role="alert"></p>
-        <p id="accountStatus" role="status"></p>
-
-        <label for="email">Email address</label>
-        <input
-          id="email"
-          type="email"
-          autocomplete="email"
-          placeholder="Enter your email"
-          required
-        >
-
-        <div id="registerFields" class="hidden">
-          <label for="fullName">Full name</label>
-          <input
-            id="fullName"
-            type="text"
-            autocomplete="name"
-            placeholder="Enter your full name"
-          >
-
-          <label for="phone">Phone number</label>
-          <input
-            id="phone"
-            type="tel"
-            autocomplete="tel"
-            placeholder="0712345678"
-          >
-        </div>
-
-        <label for="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Enter your password"
-          required
-        >
-
-        <p id="passwordHint" class="muted hidden">
-          Create a strong password of at least 6 characters.
-        </p>
-
-        <button
-          id="accountSubmit"
-          class="primary-btn full-width"
-          type="submit"
-        >LOGIN</button>
-
-        <p>
-          <span id="switchPrompt">New customer?</span>
-          <button
-            id="switchAccount"
-            type="button"
-            class="text-btn"
-          >Register here</button>
-        </p>
-
-        <button
-          id="resetPasswordBtn"
-          type="button"
-          class="text-btn"
-        >Forgot password?</button>
-
-        <button
-          id="logoutBtn"
-          type="button"
-          class="secondary-btn full-width hidden"
-        >LOG OUT</button>
-      </form>
-
-    </section>
-  </div>
-  <!-- END ACCOUNT WINDOW -->
-
-  <!-- SUPABASE AND WEBSITE SCRIPTS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="style.js"></script>
-  <script src="push.js"></script>
-
-</body>
-</html>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Royal Fits Boutique254 | Fashion Store</title>  
+  <meta name="description" content="Shop stylish fashion at Royal Fits Boutique254 in Nairobi, Kenya.">  
+  <meta name="theme-color" content="#111111">    <link rel="stylesheet" href="style.css">    <style>  
+    /* WhatsApp floating button */  
+    .royal-whatsapp {  
+      position: fixed;  
+      right: 20px;  
+      bottom: 20px;  
+      z-index: 99999;  
+      display: flex;  
+      align-items: center;  
+      justify-content: center;  
+      gap: 10px;  
+      padding: 12px 18px;  
+      border-radius: 50px;  
+      background: #25D366;  
+      color: #ffffff;  
+      text-decoration: none;  
+      font-family: Arial, sans-serif;  
+      font-size: 15px;  
+      font-weight: bold;  
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);  
+      transition: background 0.2s ease, transform 0.2s ease;  
+    }  
+  
+    .royal-whatsapp:hover {  
+      background: #128C7E;  
+      color: #ffffff;  
+      transform: translateY(-2px);  
+    }  
+  
+    .royal-whatsapp svg {  
+      width: 29px;  
+      height: 29px;  
+      flex-shrink: 0;  
+      display: block;  
+    }  
+  
+    .royal-whatsapp:focus-visible {  
+      outline: 3px solid #111111;  
+      outline-offset: 4px;  
+    }  
+  
+    /* Notification bell beside Cart */  
+    .notification-bell {  
+      display: inline-flex;  
+      align-items: center;  
+      justify-content: center;  
+      position: relative;  
+      flex-shrink: 0;  
+      width: 42px;  
+      height: 42px;  
+      margin-left: 4px;  
+      padding: 0;  
+      border: 1px solid #d4af37;  
+      border-radius: 50%;  
+      background: #111111;  
+      color: #d4af37;  
+      font-size: 21px;  
+      line-height: 1;  
+      cursor: pointer;  
+      transition: background 0.2s ease, color 0.2s ease,  
+                  transform 0.2s ease;  
+    }  
+  
+    .notification-bell:hover {  
+      background: #d4af37;  
+      color: #111111;  
+      transform: scale(1.05);  
+    }  
+  
+    .notification-bell:focus-visible {  
+      outline: 2px solid #d4af37;  
+      outline-offset: 3px;  
+    }  
+  
+    .notification-bell:disabled {  
+      opacity: 0.65;  
+      cursor: wait;  
+    }  
+  
+    /* Screen-reader-only notification status */  
+    .push-status-hidden {  
+      position: absolute;  
+      width: 1px;  
+      height: 1px;  
+      padding: 0;  
+      margin: -1px;  
+      overflow: hidden;  
+      clip: rect(0, 0, 0, 0);  
+      white-space: nowrap;  
+      border: 0;  
+    }  
+  
+    @media (max-width: 480px) {  
+      .royal-whatsapp {  
+        right: 14px;  
+        bottom: 14px;  
+        padding: 12px;  
+      }  
+  
+      .royal-whatsapp .whatsapp-label {  
+        display: none;  
+      }  
+  
+      .notification-bell {  
+        width: 38px;  
+        height: 38px;  
+        margin-left: 3px;  
+        font-size: 19px;  
+      }  
+    }  
+  </style>  </head>  <body>    <div class="topbar">  
+    Welcome to Royal Fits Boutique254  
+    <span>📍 Nairobi, Kenya | Prices in KSh</span>  
+  </div>    <header class="header">  
+    <a class="brand" href="#">  
+      <div>ROYAL FITS <span>254</span></div>  
+      <small>B O U T I Q U E</small>  
+    </a>  <form id="searchForm" class="search">  
+  <input  
+    id="searchInput"  
+    type="search"  
+    placeholder="Search dresses, shoes, bags..."  
+  >  
+  <button type="submit">Search</button>  
+</form>  
+
+<button class="header-btn" id="accountBtn" type="button">  
+  👤 Account  
+</button>  
+
+<button class="header-btn" id="myOrdersBtn" type="button">  
+  📦 My Orders  
+</button>  
+
+<button class="header-btn" id="cartBtn" type="button">  
+  🛍 Cart (<span id="cartCount">0</span>)  
+</button>  
+
+<!-- Notification bell beside Cart -->  
+<button  
+  id="enablePushNotifications"  
+  class="notification-bell"  
+  type="button"  
+  aria-label="Enable phone notifications"  
+  title="Enable phone notifications"  
+>🔔</button>  
+
+<p  
+  id="pushNotificationStatus"  
+  class="push-status-hidden"  
+  role="status"  
+  aria-live="polite"  
+>Enable notifications for order and delivery updates.</p>
+
+  </header>    <nav class="navigation" id="categories">  
+    <button class="category active" data-category="All" type="button">  
+      All Products  
+    </button>  
+    <button class="category" data-category="Women" type="button">  
+      Women  
+    </button>  
+    <button class="category" data-category="Men" type="button">  
+      Men  
+    </button>  
+    <button class="category" data-category="Shoes" type="button">  
+      Shoes  
+    </button>  
+    <button class="category" data-category="Bags" type="button">  
+      Bags  
+    </button>  
+    <button class="category" data-category="Accessories" type="button">  
+      Accessories  
+    </button>  
+  </nav>    <main class="container">  <section class="hero">  
+  <div class="hero-content">  
+    <p class="eyebrow">YOUR STYLE. YOUR ROYALTY.</p>  
+    <h1>Fashion that makes you feel royal.</h1>  
+
+    <p>  
+      Discover beautiful clothing, shoes, handbags and accessories  
+      at affordable prices.  
+    </p>  
+
+    <button class="gold-btn" id="shopBtn" type="button">  
+      SHOP COLLECTION →  
+    </button>  
+  </div>  
+
+  <div class="crown">👑</div>  
+</section>  
+
+<section class="benefits">  
+  <div>  
+    🚚 <strong>Nairobi Delivery</strong>  
+    <small>Delivery options available</small>  
+  </div>  
+
+  <div>  
+    💳 <strong>M-Pesa Payments</strong>  
+    <small>Pay securely through M-Pesa</small>  
+  </div>  
+
+  <div>  
+    ✨ <strong>Fashion Finds</strong>  
+    <small>Styles for every occasion</small>  
+  </div>  
+
+  <div>  
+    🔒 <strong>Customer Accounts</strong>  
+    <small>Secure customer sign-in</small>  
+  </div>  
+</section>  
+
+<section id="shop">  
+  <div class="section-heading">  
+    <div>  
+      <h2>Our Fashion Collection</h2>  
+      <p>Find your next favourite look.</p>  
+    </div>  
+
+    <span id="productCount"></span>  
+  </div>  
+
+  <div class="products" id="productGrid"></div>  
+</section>  
+
+<section class="promo">  
+  <div>  
+    <h2>Discover your signature style 👑</h2>  
+    <p>Join Royal Fits Boutique254 today.</p>  
+  </div>  
+
+  <button class="gold-btn" id="registerBtn" type="button">  
+    CREATE ACCOUNT  
+  </button>  
+</section>
+
+  </main>    <!-- MY ORDERS -->    <section id="myOrdersSection" class="container my-orders-section hidden">  
+    <div class="section-heading">  
+      <div>  
+        <h2>My Orders</h2>  
+        <p>View your purchases and payment status.</p>  
+      </div>  <button type="button" id="backToShopBtn" class="primary-btn">  
+    Back to Shop  
+  </button>  
+</div>  
+
+<div id="myOrdersList">  
+  <p>Your orders will appear here after you place an order.</p>  
+</div>
+
+  </section>    <!-- FOOTER -->    <footer>  
+    <div class="footer-grid">  <div>  
+    <a class="brand footer-brand" href="#">  
+      <div>ROYAL FITS <span>254</span></div>  
+      <small>B O U T I Q U E</small>  
+    </a>  
+
+    <p>Your fashion destination in Nairobi, Kenya.</p>  
+  </div>  
+
+  <div>  
+    <h3>QUICK LINKS</h3>  
+
+    <a href="#shop">Shop products</a>  
+
+    <button id="footerAccount" type="button">  
+      My account  
+    </button>  
+
+    <a  
+      href="https://www.instagram.com/mrreveler/"  
+      target="_blank"  
+      rel="noopener noreferrer"  
+    >📸 Instagram</a>  
+
+    <a  
+      href="https://www.tiktok.com/@dwf.kevo254"  
+      target="_blank"  
+      rel="noopener noreferrer"  
+    >🎵 TikTok</a>  
+  </div>  
+
+  <div>  
+    <h3>CUSTOMER CARE</h3>  
+    <p>Delivery in Nairobi</p>  
+    <p>Phone: 0180732821</p>  
+    <p>Email: kelvinkinywa77@gmail.com</p>  
+
+    <p>  
+      <a  
+        href="https://wa.me/254180732821?text=Hello%20ROYAL%20FITS%20Boutique254!%20I%27d%20like%20to%20ask%20about%20your%20products.."  
+        target="_blank"  
+        rel="noopener noreferrer"  
+      >Chat with us on WhatsApp</a>  
+    </p>  
+  </div>  
+
+</div>  
+
+<p class="copyright">  
+  © <span id="year"></span> Royal Fits Boutique254. All rights reserved.  
+</p>
+
+  </footer>    <!-- FLOATING WHATSAPP BUTTON -->  <a
+href="https://wa.me/254180732821?text=Hello%20ROYAL%20FITS%20Boutique254!%20I%27d%20like%20to%20ask%20about%20your%20products.."
+class="royal-whatsapp"
+target="_blank"
+rel="noopener noreferrer"
+aria-label="Chat with ROYAL FITS Boutique254 on WhatsApp"
+title="Chat with us on WhatsApp"
+
+> 
+
+<svg  
+  viewBox="0 0 32 32"  
+  xmlns="http://www.w3.org/2000/svg"  
+  aria-hidden="true"  
+>  
+  <path  
+    fill="currentColor"  
+    d="M16 .8A15 15 0 0 0 3.1 23.5L1 31l7.7-2A15.1 15.1 0 1 0 16 .8Zm0 27.5a12.3 12.3 0 0 1-6.3-1.7l-.5-.3-4.6 1.2 1.2-4.5-.3-.5A12.3 12.3 0 1 1 16 28.3Zm6.8-9.2c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2l-1.2 1.4c-.2.2-.4.3-.8.1a10 10 0 0 1-3-1.8 11.4 11.4 0 0 1-2.1-2.6c-.2-.4 0-.6.2-.8l.6-.7.4-.7c.1-.2 0-.5 0-.7l-1.2-2.8c-.3-.7-.7-.6-.9-.6h-.8c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.1s1.3 3.6 1.5 3.8c.2.3 2.6 4 6.3 5.6.9.4 1.6.6 2.1.7.9.3 1.7.2 2.3.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.2-.4-.3-.8-.5Z"  
+  />  
+</svg>  
+
+<span class="whatsapp-label">Chat with us</span>
+
+  </a>    <!-- SHOPPING CART -->    <div class="overlay hidden" id="cartOverlay">  
+    <section class="panel">  <div class="panel-heading">  
+    <h2>Your Shopping Cart</h2>  
+
+    <button  
+      class="close-btn"  
+      data-close="cartOverlay"  
+      type="button"  
+      aria-label="Close cart"  
+    >×</button>  
+  </div>  
+
+  <div id="cartItems">  
+    <p>Your cart is empty.</p>  
+  </div>  
+
+  <div class="cart-total">  
+    <span>Total</span>  
+    <strong id="cartTotal">KSh 0</strong>  
+  </div>  
+
+  <p class="muted">  
+    Delivery charges will be confirmed before an order is completed.  
+  </p>  
+
+  <div class="mpesa-checkout">  
+    <label for="mpesa-phone">M-Pesa phone number</label>  
+
+    <input  
+      id="mpesa-phone"  
+      type="tel"  
+      placeholder="0712345678"  
+      autocomplete="tel"  
+      inputmode="tel"  
+      required  
+    >  
+
+    <p class="muted">  
+      Your payment amount will be calculated from your cart total.  
+    </p>  
+
+    <p id="mpesa-message" role="status" aria-live="polite"></p>  
+  </div>  
+
+  <button  
+    class="primary-btn full-width"  
+    id="checkoutBtn"  
+    type="button"  
+  >PLACE ORDER &amp; PAY WITH M-PESA</button>  
+
+  <button  
+    class="secondary-btn full-width"  
+    data-close="cartOverlay"  
+    type="button"  
+  >Continue shopping</button>  
+
+</section>
+
+  </div>    <!-- PRODUCT IMAGE POPUP -->    <div id="imagePopup" class="image-popup" onclick="closeImage()">  
+    <button  
+      class="close-popup"  
+      aria-label="Close image"  
+      onclick="closeImage()"  
+    >&times;</button>  <img  
+  id="popupImage"  
+  src=""  
+  alt="Product preview"  
+  onclick="event.stopPropagation()"  
+>  
+
+<p id="popupName"></p>
+
+  </div>    <!-- ACCOUNT LOGIN AND REGISTRATION WINDOW -->    <div class="overlay hidden" id="accountOverlay">  
+    <section class="panel">  <div class="panel-heading">  
+    <h2 id="accountTitle">Customer Login</h2>  
+
+    <button  
+      class="close-btn"  
+      data-close="accountOverlay"  
+      type="button"  
+      aria-label="Close account window"  
+    >×</button>  
+  </div>  
+
+  <form id="accountForm">  
+    <p id="formError" role="alert"></p>  
+    <p id="accountStatus" role="status"></p>  
+
+    <label for="email">Email address</label>  
+    <input  
+      id="email"  
+      type="email"  
+      autocomplete="email"  
+      placeholder="Enter your email"  
+      required  
+    >  
+
+    <div id="registerFields" class="hidden">  
+      <label for="fullName">Full name</label>  
+      <input  
+        id="fullName"  
+        type="text"  
+        autocomplete="name"  
+        placeholder="Enter your full name"  
+      >  
+
+      <label for="phone">Phone number</label>  
+      <input  
+        id="phone"  
+        type="tel"  
+        autocomplete="tel"  
+        placeholder="0712345678"  
+      >  
+    </div>  
+
+    <label for="password">Password</label>  
+    <input  
+      id="password"  
+      type="password"  
+      autocomplete="current-password"  
+      placeholder="Enter your password"  
+      required  
+    >  
+
+    <p id="passwordHint" class="muted hidden">  
+      Create a strong password of at least 6 characters.  
+    </p>  
+
+    <button  
+      id="accountSubmit"  
+      class="primary-btn full-width"  
+      type="submit"  
+    >LOGIN</button>  
+
+    <p>  
+      <span id="switchPrompt">New customer?</span>  
+      <button  
+        id="switchAccount"  
+        type="button"  
+        class="text-btn"  
+      >Register here</button>  
+    </p>  
+
+    <button  
+      id="resetPasswordBtn"  
+      type="button"  
+      class="text-btn"  
+    >Forgot password?</button>  
+
+    <button  
+      id="logoutBtn"  
+      type="button"  
+      class="secondary-btn full-width hidden"  
+    >LOG OUT</button>  
+  </form>  
+
+</section>
+
+  </div>  
+  <!-- END ACCOUNT WINDOW -->    <!-- Load Supabase BEFORE the store and notification scripts -->    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>    <script src="style.js"></script>    <script src="push.js"></script>  </body>  
+</html> add and provide full code
